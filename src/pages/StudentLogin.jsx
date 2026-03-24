@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Landing.css'; // Add this import, dipshit
-import logo from '../assets/icons/logo.svg'; // Use proper logo import
+import '../styles/Landing.css';
+import logo from '../assets/icons/logo.svg';
 
 export default function StudentLogin() {
   const navigate = useNavigate();
