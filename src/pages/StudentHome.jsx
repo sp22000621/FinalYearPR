@@ -1,6 +1,5 @@
 import React from 'react';
 import '../styles/Dashboard.css';
-
 export default function StudentHome() {
   const reports = [
     { id: '#REQ-4092', title: 'Leaking tap in Block A', status: 'Overdue', time: '3 days ago', type: 'Plumbing', color: '#dc2626', bg: '#fee2e2' },
@@ -40,8 +39,8 @@ export default function StudentHome() {
 
         <div className="container-fluid px-4">
           {/* Action Cards */}
-          <div className="row mb-4">
-            <div className="col-12 col-lg-6">
+          <div className="row mb-4 h-100" style={{height: '140px'}}>
+            <div className="col-12 col-md-6">
               <div className="report-main-card shadow-lg">
                 <div className="icon-circle"><span className="material-symbols-rounded">add</span></div>
                 <div>
@@ -50,7 +49,8 @@ export default function StudentHome() {
                 </div>
               </div>
             </div>
-            <div className="col-12 col-lg-6 d-none d-lg-block">
+           <div className="col-12 col-md-6 d-none d-md-block">
+
                <div className="my-issues-card shadow-sm h-100 d-flex align-items-center gap-3 px-4 rounded-4 bg-white">
                   <span className="material-symbols-rounded text-teal">assignment</span>
                   <div className="text-dark">
