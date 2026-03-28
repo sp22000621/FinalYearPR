@@ -34,7 +34,7 @@ export default function StudentSidebar() {
           width={40} 
           alt="logo" 
           className="rounded-lg mx-auto" 
-        />
+        />  
       </div>
       <nav className="flex-grow-1 px-3">
         {navItems.map((item) => (

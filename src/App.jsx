@@ -5,6 +5,7 @@ import StudentLogin from './pages/StudentLogin';
 import FacultyLogin from './pages/FacultyLogin';
 import StudentHome from './pages/StudentHome';
 import StudentReport from './pages/StudentReport';
+import StudentAlerts from './pages/StudentAlerts';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/student-login" element={<StudentLogin />} />
         <Route path="/student-home" element={<StudentHome />} />
         <Route path="/student/report" element={<StudentReport />} />
+        <Route path="/student-alerts" element={<StudentAlerts />} />
 
         {/* Faculty Flow */}
         <Route path="/faculty-login" element={<FacultyLogin />} />
