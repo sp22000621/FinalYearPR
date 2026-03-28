@@ -40,7 +40,7 @@ export default function StudentHome() {
           {/* Main Action Cards */}
           <div className="row mb-4">
             <div className="col-12 col-md-6 mb-3 mb-md-0">
-              {/* This button now navigates to your new report page */}
+              {/* This button now navigates to report page */}
               <button className="report-main-card shadow-lg h-100 w-100 border-0" onClick={() => navigate('/student/report')}>
                 <div className="icon-circle"><span className="material-symbols-rounded">add</span></div>
                 <div className="text-start">

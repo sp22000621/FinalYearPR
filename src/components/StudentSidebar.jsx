@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import logo from '../assets/icons/logo.svg';
 
 const navItems = [
   { icon: 'home', label: 'Issues', path: '/student-home' },
@@ -27,8 +28,9 @@ export default function StudentSidebar() {
       }}
     >
       <div className="p-4 text-center">
+        {/**  my logo */}
         <img 
-          src="https://ui-avatars.com/api/?name=B&background=003366&color=fff&size=40" 
+          src={logo} 
           width={40} 
           alt="logo" 
           className="rounded-lg mx-auto" 
