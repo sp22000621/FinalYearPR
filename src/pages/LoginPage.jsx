@@ -22,7 +22,7 @@ export default function LoginPage() {
 
           <div className="mb-4 text-start">
             <label className="text-white-50 small ms-2">Password</label>
-            <input type="password" className="form-control bg-transparent text-white border-secondary" placeholder="••••••••" />
+            <input type="password" className="form-control bg-transparent text-white border-secondary" placeholder="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" />
           </div>
 
           <button className="btn w-100 py-2 fw-bold text-white" style={{ backgroundColor: '#003366', borderRadius: '10px' }}>
@@ -30,7 +30,7 @@ export default function LoginPage() {
           </button>
           
           {/* orange on hover link */}
-          <style>{.forgot-link:hover { color: orange !important; }}</style>
+          <style>{`.forgot-link:hover { color: orange !important; }`}</style>
           <div className="mt-3">
             <a href="#" className="forgot-link text-white-50 small text-decoration-none">Forgot Password?</a>
           </div>
