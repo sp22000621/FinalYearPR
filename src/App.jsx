@@ -9,7 +9,8 @@ import StudentAlerts from './pages/StudentAlerts';
 import StudentCommunities from './pages/StudentCommunities';
 import CommunityChat from './pages/CommunityChat';
 import StudentProfile from './pages/StudentProfile';
-
+import SeniorFacultyHome from './pages/SeniorFacultyHome';
+import FacultyScan from './pages/FacultyScan'; 
 function App() {
   return (
     <Router>
@@ -17,7 +18,6 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         
         {/* Student Flow */}
-        
         <Route path="/student-login" element={<StudentLogin />} />
         <Route path="/student-home" element={<StudentHome />} />
         <Route path="/student/report" element={<StudentReport />} />
@@ -26,9 +26,11 @@ function App() {
         <Route path="/student-communities/:id" element={<CommunityChat />} />
         <Route path="/student-profile" element={<StudentProfile />} />
 
-
         {/* Faculty Flow */}
         <Route path="/faculty-login" element={<FacultyLogin />} />
+        <Route path="/faculty-home" element={<SeniorFacultyHome />} />
+        <Route path="/faculty-scan" element={<FacultyScan />} />
+        
       </Routes>
     </Router>
   );

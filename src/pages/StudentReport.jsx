@@ -19,8 +19,7 @@ export default function StudentReport() {
 
   const handleSubmit = () => {
     setSubmitted(true);
-    // Increased timeout slightly for better user experience
-    setTimeout(() => navigate('/student-home'), 2500);
+    setTimeout(() => navigate('/student-home'), 2000);
   };
 
   return (
@@ -30,7 +29,7 @@ export default function StudentReport() {
           <div className="w-100 mx-auto" style={{ maxWidth: '1000px' }}>
             {/* Header Area */}
             <div className="d-flex align-items-center mb-4">
-              <button className="btn text-white p-0 me-3 hover-orange" onClick={() => navigate('/student-home')}>
+              <button className="btn text-white p-0 me-3" onClick={() => navigate('/student-home')}>
                 <span className="material-symbols-rounded">arrow_back</span>
               </button>
               <div>
@@ -40,53 +39,50 @@ export default function StudentReport() {
             </div>
 
             {!selected ? (
-              /* Category List - Wide, Semi-Solid White Rows */
+              /* Category List - Wide Rows */
               <div className="d-flex flex-column gap-3">
                 {categories.map((cat) => (
                   <div 
                     key={cat.label} 
-                    className="p-4 rounded-4 d-flex align-items-center transition-all cursor-pointer shadow-sm hover-light-bg"
+                    className="p-4 rounded-4 d-flex align-items-center transition-all cursor-pointer"
                     onClick={() => setSelected(cat.label)}
                     style={{ 
-                      /* Theming update: Increased white opacity (0.9) to match dashboard viewability */
-                      background: cat.isEmergency ? 'rgba(220, 38, 38, 0.2)' : 'rgba(255, 255, 255, 0.9)',
-                      backdropFilter: 'blur(10px)', /* Maintains glass effect */
-                      border: cat.isEmergency ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid rgba(255, 255, 255, 0.3)',
-                      /* Text color is now dark (#333) against the white background */
-                      color: cat.isEmergency ? '#dc2626' : '#333' 
+                      background: cat.isEmergency ? 'rgba(220, 38, 38, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                      border: cat.isEmergency ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                      color: cat.isEmergency ? '#ff4d4d' : 'white'
                     }}
                   >
-                    <span className="material-symbols-rounded me-4 fs-4" style={{color: cat.isEmergency ? '#dc2626' : '#3d7a77'}}>{cat.icon}</span>
+                    <span className="material-symbols-rounded me-4 fs-4">{cat.icon}</span>
                     <span className="fw-semibold fs-5">{cat.label}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              /* Detail Input Area - Semi-Solid White Container */
-              <div className="p-4 rounded-4 shadow-sm" style={{ background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary-subtle">
-                  <div className="d-flex align-items-center gap-3" style={{color: '#333'}}>
-                    <span className="material-symbols-rounded" style={{color: '#3d7a77'}}>assignment</span>
+              /* Detail Input Area - Wide View */
+              <div className="p-4 rounded-4" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-white-10">
+                  <div className="d-flex align-items-center gap-3 text-white">
+                    <span className="material-symbols-rounded opacity-75">assignment</span>
                     <span className="fw-bold fs-5">{selected}</span>
                   </div>
-                  <button className="btn text-muted p-0 hover-orange" onClick={() => setSelected(null)}>
+                  <button className="btn text-white-50 p-0" onClick={() => setSelected(null)}>
                     <span className="material-symbols-rounded">close</span>
                   </button>
                 </div>
 
-                <label className="text-muted small mb-2 d-block fw-semibold">More Details (optional)</label>
+                <label className="text-white-50 small mb-2 d-block">More Details (optional)</label>
                 <textarea 
-                  className="form-control bg-light text-dark border-secondary-subtle mb-4 p-3 fs-5"
+                  className="form-control bg-transparent text-white border-white-25 mb-4 p-3 fs-5"
                   rows="6"
                   placeholder="Describe the issue here..."
-                  style={{ borderRadius: '12px', resize: 'none' }}
+                  style={{ border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px' }}
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                 />
 
                 <button 
-                  className="btn w-100 py-3 fw-bold fs-5 rounded-3 text-white transition-all shadow-sm" 
-                  style={{ background: '#3d7a77' }}
+                  className="btn w-100 py-3 fw-bold fs-5 rounded-3" 
+                  style={{ background: '#3d7a77', color: 'white' }}
                   onClick={handleSubmit}
                 >
                   Submit Report
@@ -95,15 +91,13 @@ export default function StudentReport() {
             )}
           </div>
         ) : (
-          /* Success...Semi-Solid White Glass Container for Visibility */
-          <div className="d-flex flex-column align-items-center justify-content-center h-100">
-             <div className="p-5 rounded-4 shadow-lg text-center" style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(15px)', border: '1px solid rgba(255, 255, 255, 0.3)', maxWidth: '600px', color: '#333' }}>
-                <div className="mb-4 d-flex align-items-center justify-content-center mx-auto" style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'rgba(25, 135, 84, 0.1)', border: '3px solid #198754' }}>
-                  <span className="material-symbols-rounded text-success fs-1">check_circle</span>
-                </div>
-                <h1 className="fw-bold mb-3 fs-2">Report Submitted!</h1>
-                <p className="fs-5 opacity-75 mb-0">Your {selected} report has been successfully submitted. You will be redirected shortly.</p>
-             </div>
+          /* Success State - Full Screen Centered */
+          <div className="d-flex flex-column align-items-center justify-content-center text-center py-5">
+            <div className="mb-4 d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(25, 135, 84, 0.2)', border: '2px solid #198754' }}>
+              <span className="material-symbols-rounded text-success fs-1">check</span>
+            </div>
+            <h2 className="text-white fw-bold mb-2">Report Submitted!</h2>
+            <p className="text-white-50">Your {selected} report has been submitted successfully.</p>
           </div>
         )}
       </div>
