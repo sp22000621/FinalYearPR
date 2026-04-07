@@ -13,8 +13,16 @@ export default function FacultyBottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="d-md-none fixed-bottom d-flex justify-content-around py-2 shadow-lg" 
-         style={{ background: 'rgba(255,255,255,0.98)', borderTop: '1px solid #eee' }}>
+    <nav 
+      className="d-md-none fixed-bottom d-flex justify-content-around py-2" 
+      style={{ 
+        /* MATCHING THE SIDEBAR COLORS */
+        background: 'rgba(255,255,255,0.05)', 
+        backdropFilter: 'blur(20px)', 
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        zIndex: 1000
+      }}
+    >
       {navItems.map((item) => {
         const isActive = location.pathname === item.path;
         return (
@@ -22,10 +30,22 @@ export default function FacultyBottomNav() {
             key={item.path}
             onClick={() => navigate(item.path)}
             className="text-center px-3 py-1 rounded-3"
-            style={{ color: isActive ? '#3d7a77' : '#999', cursor: 'pointer' }}
+            style={{ 
+              color: isActive ? '#3d7a77' : 'rgba(255,255,255,0.5)', 
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
           >
-            <span className="material-symbols-rounded" style={{ fontSize: '26px' }}>{item.icon}</span>
-            <div style={{ fontSize: '10px', fontWeight: 'bold' }}>{item.label}</div>
+            <span className="material-symbols-rounded" style={{ fontSize: '24px' }}>
+              {item.icon}
+            </span>
+            <div style={{ 
+              fontSize: '10px', 
+              fontWeight: isActive ? 'bold' : 'normal',
+              marginTop: '-2px'
+            }}>
+              {item.label}
+            </div>
           </div>
         );
       })}

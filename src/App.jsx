@@ -11,6 +11,9 @@ import CommunityChat from './pages/CommunityChat';
 import StudentProfile from './pages/StudentProfile';
 import SeniorFacultyHome from './pages/SeniorFacultyHome';
 import FacultyScan from './pages/FacultyScan'; 
+import FacultyLayout from './components/FacultyLayout';
+import FacultyChat from './pages/FacultyChat';     
+import FacultyTeams from './pages/FacultyTeams';
 function App() {
   return (
     <Router>
@@ -30,7 +33,8 @@ function App() {
         <Route path="/faculty-login" element={<FacultyLogin />} />
         <Route path="/faculty-home" element={<SeniorFacultyHome />} />
         <Route path="/faculty-scan" element={<FacultyScan />} />
-        
+        <Route path="/faculty-teams/chat/:memberId" element={<FacultyChat />} />
+        <Route path="/faculty-teams" element={<FacultyTeams />} />
       </Routes>
     </Router>
   );

@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import logo from '../assets/icons/logo.svg';
+
 
 const navItems = [
   { icon: 'assignment', label: 'Issues', path: '/faculty-home' },
@@ -45,14 +47,15 @@ export default function FacultySidebar() {
         }
       `}</style>
 
-      <div className="p-4 mb-3">
-        <div className="d-flex align-items-center gap-2">
-          <div style={{ background: '#3d7a77', padding: '8px', borderRadius: '12px' }}>
-             <span className="material-symbols-rounded text-white">shield_person</span>
-          </div>
-          <h5 className="text-white fw-bold mb-0">BIUST Ops</h5>
-        </div>
-      </div>
+       <div className="p-4 text-center">
+         {/**  my logo */}
+         <img 
+           src={logo} 
+           width={40} 
+           alt="logo" 
+           className="rounded-lg mx-auto" 
+         />  
+       </div>
 
       <nav className="flex-grow-1">
         {navItems.map((item) => {

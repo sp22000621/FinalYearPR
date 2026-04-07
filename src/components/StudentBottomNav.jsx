@@ -17,9 +17,10 @@ export default function StudentBottomNav() {
     <nav
       className="mobile-bottom-nav d-md-none fixed-bottom d-flex justify-content-around py-2"
       style={{ 
-        background: 'rgba(255, 255, 255, 0.95)', 
+        background: 'rgba(255, 255, 255, 0.03)',
         backdropFilter: 'blur(15px)', 
-        borderTop: '1px solid #e5e7eb',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        height: '100vh',
         zIndex: 1050 
       }}
     >
