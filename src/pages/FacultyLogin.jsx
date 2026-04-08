@@ -10,7 +10,13 @@ export default function FacultyLogin() {
 
   const handleLogin = (role) => {
     if (staffId === '12345' && password === '12345') {
-      navigate(role === 'senior' ? '/senior-faculty-home' : '/faculty-home');
+      // FIX: Swapping the logic so 'senior' goes to the existing dashboard
+      // and 'operator' goes to the upcoming Loveable page.
+      if (role === 'senior') {
+        navigate('/faculty-home'); 
+      } else {
+        navigate('/operator-home');
+      }
     } else {
       alert('Invalid Credentials');
     }
@@ -23,16 +29,29 @@ export default function FacultyLogin() {
       backgroundPosition: 'center',
       minHeight: '100vh',
       display: 'grid',
-      placeItems: 'center'
+      placeItems: 'center',
+      position: 'relative'
     }}>
-      <button className="back-btn" onClick={() => navigate('/')} style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
+      {/* Back Button */}
+      <button 
+        className="back-btn" 
+        onClick={() => navigate('/')} 
+        style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+      >
         <span className="material-symbols-rounded" style={{ fontSize: '40px' }}>arrow_back</span>
       </button>
 
-      <div className="glass-card text-center" style={{ width: '90%', maxWidth: '450px', padding: '40px', borderRadius: '24px' }}>
+      <div className="glass-card text-center shadow-lg" style={{ 
+        width: '90%', 
+        maxWidth: '450px', 
+        padding: '40px', 
+        borderRadius: '24px',
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(15px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}>
         <img src={logo} alt="BIUST" className="mb-3" style={{ width: '80px', backgroundColor: 'white', padding: '10px', borderRadius: '15px' }} />
         
-        {/* Same styling as Student Login */}
         <h2 className="text-white fw-bold display-6 mb-2">Faculty Sign In</h2>
         <p className="text-white-50 fs-5 mb-4">Management Access</p>
 
@@ -41,7 +60,7 @@ export default function FacultyLogin() {
             <label className="text-white-50 fw-bold ms-2 mb-1 d-block fs-6">Staff ID</label>
             <input 
               type="text" 
-              className="form-control bg-transparent text-white border-secondary py-3 fs-5" 
+              className="form-control bg-transparent text-white border-secondary py-3 fs-5 shadow-none" 
               placeholder="Enter ID" 
               style={{ borderRadius: '12px' }}
               value={staffId}
@@ -53,7 +72,7 @@ export default function FacultyLogin() {
             <label className="text-white-50 fw-bold ms-2 mb-1 d-block fs-6">Password</label>
             <input 
               type="password" 
-              className="form-control bg-transparent text-white border-secondary py-3 fs-5" 
+              className="form-control bg-transparent text-white border-secondary py-3 fs-5 shadow-none" 
               placeholder="••••••••" 
               style={{ borderRadius: '12px' }}
               value={password}
@@ -61,32 +80,36 @@ export default function FacultyLogin() {
             />
           </div>
 
-          {/* Solid Blue Button */}
+          {/* Standard Operator Login */}
           <button 
             type="button"
             onClick={() => handleLogin('operator')}
-            className="btn w-100 py-3 fw-bold text-white mb-3 shadow-sm border-0" 
-            style={{ backgroundColor: '#003366', borderRadius: '12px', fontSize: '1.2rem' }}
+            className="btn w-100 py-3 fw-bold text-white mb-3 shadow-sm border-0 transition-all" 
+            style={{ backgroundColor: '#003366', borderRadius: '12px', fontSize: '1.1rem' }}
           >
-            Login
+            LOGIN
           </button>
 
+          {/* Senior Faculty Login */}
           <button 
-                  type="button"
-                  onClick={() => handleLogin('senior')}
-                  className="btn w-100 py-3 fw-bold rounded-4 fs-5 border-0 shadow-sm transition-all" 
-                  style={{ 
-                    background: '#3d7a77', // BIUST Teal
-                    color: 'white',
-                    letterSpacing: '1px'
-                  }}
-                >
-                      SENIOR LOGIN
+            type="button"
+            onClick={() => handleLogin('senior')}
+            className="btn w-100 py-3 fw-bold text-white rounded-4 shadow-sm border-0 transition-all" 
+            style={{ 
+              background: '#3d7a77', 
+              fontSize: '1.1rem',
+              letterSpacing: '1px'
+            }}
+          >
+            SENIOR LOGIN
           </button>
           
           <style>{`
+            .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+            .btn:active { transform: translateY(0); }
             .forgot-link:hover { color: orange !important; }
             input::placeholder { color: rgba(255,255,255,0.3) !important; }
+            input:focus { border-color: #3d7a77 !important; }
           `}</style>
 
           <div className="mt-4">

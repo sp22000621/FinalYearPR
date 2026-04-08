@@ -14,6 +14,10 @@ import FacultyScan from './pages/FacultyScan';
 import FacultyLayout from './components/FacultyLayout';
 import FacultyChat from './pages/FacultyChat';     
 import FacultyTeams from './pages/FacultyTeams';
+import FacultyPerformance from './pages/FacultyPerformance';
+import FacultyAlerts from './pages/FacultyAlerts';
+import FacultyProfile from './pages/FacultyProfile';
+import FacultyHome from './pages/FacultyHome';
 function App() {
   return (
     <Router>
@@ -30,11 +34,15 @@ function App() {
         <Route path="/student-profile" element={<StudentProfile />} />
 
         {/* Faculty Flow */}
+        <Route path="/operator-home" element={<FacultyHome />} />
         <Route path="/faculty-login" element={<FacultyLogin />} />
         <Route path="/faculty-home" element={<SeniorFacultyHome />} />
         <Route path="/faculty-scan" element={<FacultyScan />} />
         <Route path="/faculty-teams/chat/:memberId" element={<FacultyChat />} />
         <Route path="/faculty-teams" element={<FacultyTeams />} />
+        <Route path="/faculty-performance" element={<FacultyPerformance />} />
+        <Route path="/faculty-alerts" element={<FacultyAlerts />} />
+        <Route path="/faculty-profile" element={<FacultyProfile />} />
       </Routes>
     </Router>
   );
