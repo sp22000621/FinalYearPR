@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../components/StudentLayout';
 
@@ -13,9 +13,21 @@ const categories = [
 
 export default function StudentReport() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  
   const [selected, setSelected] = useState(null);
   const [details, setDetails] = useState('');
+  const [files, setFiles] = useState([]); // State to hold attachments
   const [submitted, setSubmitted] = useState(false);
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles([...files, ...selectedFiles]);
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = () => {
     setSubmitted(true);
@@ -34,12 +46,11 @@ export default function StudentReport() {
               </button>
               <div>
                 <h2 className="text-white fw-bold mb-1 fs-3">Report New Issue</h2>
-                <p className="text-white-50 small mb-0">Choose a report type from the list, then add more details for faster support.</p>
+                <p className="text-white-50 small mb-0">Choose a report type and attach any evidence if necessary.</p>
               </div>
             </div>
 
             {!selected ? (
-              /* Category List - Wide Rows */
               <div className="d-flex flex-column gap-3">
                 {categories.map((cat) => (
                   <div 
@@ -58,7 +69,6 @@ export default function StudentReport() {
                 ))}
               </div>
             ) : (
-              /* Detail Input Area - Wide View */
               <div className="p-4 rounded-4" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-white-10">
                   <div className="d-flex align-items-center gap-3 text-white">
@@ -73,25 +83,81 @@ export default function StudentReport() {
                 <label className="text-white-50 small mb-2 d-block">More Details (optional)</label>
                 <textarea 
                   className="form-control bg-transparent text-white border-white-25 mb-4 p-3 fs-5"
-                  rows="6"
+                  rows="4"
                   placeholder="Describe the issue here..."
                   style={{ border: '1px solid rgba(255,255,255,0.2)', borderRadius: '12px' }}
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                 />
 
+                {/* FILE ATTACHMENT SECTION */}
+                <div className="mb-4">
+                  <label className="text-white-50 small mb-2 d-block">Attachments (Photos/Videos)</label>
+                  
+                  {/* Hidden Input */}
+                  <input 
+                    type="file" 
+                    multiple 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    className="d-none" 
+                    accept="image/*,video/*"
+                  />
+
+                  <div className="d-flex flex-wrap gap-2">
+                    {/* Trigger Button */}
+                    <button 
+                      type="button"
+                      className="btn rounded-4 d-flex flex-column align-items-center justify-content-center"
+                      onClick={() => fileInputRef.current.click()}
+                      style={{ 
+                        width: '100px', 
+                        height: '100px', 
+                        border: '2px dashed rgba(255,255,255,0.2)', 
+                        background: 'rgba(255,255,255,0.03)',
+                        color: 'rgba(255,255,255,0.6)'
+                      }}
+                    >
+                      <span className="material-symbols-rounded">add_a_photo</span>
+                      <span style={{ fontSize: '10px' }} className="mt-1">Add Media</span>
+                    </button>
+
+                    {/* File Previews */}
+                    {files.map((file, index) => (
+                      <div 
+                        key={index} 
+                        className="position-relative rounded-4 overflow-hidden" 
+                        style={{ width: '100px', height: '100px', border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        <div className="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white-50">
+                          <span className="material-symbols-rounded">description</span>
+                        </div>
+                        <button 
+                          onClick={() => removeFile(index)}
+                          className="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 d-flex align-items-center justify-content-center"
+                          style={{ width: '20px', height: '20px', borderRadius: '50%', margin: '5px' }}
+                        >
+                          <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>close</span>
+                        </button>
+                        <div className="position-absolute bottom-0 start-0 w-100 p-1 bg-dark bg-opacity-75 text-truncate" style={{ fontSize: '9px', color: 'white' }}>
+                          {file.name}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <button 
                   className="btn w-100 py-3 fw-bold fs-5 rounded-3" 
                   style={{ background: '#3d7a77', color: 'white' }}
                   onClick={handleSubmit}
                 >
-                  Submit Report
+                  Submit Report {files.length > 0 && `(${files.length} Files)`}
                 </button>
               </div>
             )}
           </div>
         ) : (
-          /* Success State - Full Screen Centered */
           <div className="d-flex flex-column align-items-center justify-content-center text-center py-5">
             <div className="mb-4 d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(25, 135, 84, 0.2)', border: '2px solid #198754' }}>
               <span className="material-symbols-rounded text-success fs-1">check</span>

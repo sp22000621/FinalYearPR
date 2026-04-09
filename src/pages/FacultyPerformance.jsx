@@ -23,7 +23,7 @@ export default function FacultyPerformance() {
 
   return (
     <FacultyLayout>
-      <div className="container py-4 no-scrollbar" style={{ maxWidth: '800px', height: '100vh', overflowY: 'auto' }}>
+      <div className="container py-4 no-scrollbar" style={{ maxWidth: '800px'}}>
         
         {/* Header */}
         <div className="d-flex justify-content-between align-items-center mb-4">

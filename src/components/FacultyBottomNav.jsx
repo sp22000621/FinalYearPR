@@ -2,10 +2,12 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const navItems = [
-  { icon: 'assignment', label: 'Issues', path: '/faculty-home' },
-  { icon: 'groups', label: 'Teams', path: '/faculty-teams' },
-  { icon: 'notifications', label: 'Alerts', path: '/faculty-alerts' },
-  { icon: 'account_circle', label: 'Profile', path: '/faculty-profile' },
+  { label: 'Issues', icon: 'description', path: '/faculty-home' },
+  { label: 'Scan', icon: 'document_scanner', path: '/faculty-scan' }, 
+  { label: 'Teams', icon: 'groups', path: '/faculty-teams' },
+  { label: 'Performance', icon: 'leaderboard', path: '/faculty-performance' }, // Missing in your current mobile view
+  { label: 'Alerts', icon: 'notifications', path: '/faculty-alerts' },
+  { label: 'Profile', icon: 'account_circle', path: '/faculty-profile' },
 ];
 
 export default function FacultyBottomNav() {

@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StudentLayout from '../components/StudentLayout';
 
-/**
- * StudentProfile Component
- */
 export default function StudentProfile() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -16,29 +13,29 @@ export default function StudentProfile() {
 
   return (
     <StudentLayout>
-      <div className="container-fluid p-4 p-md-5">
-        <div className="w-100 mx-auto" style={{ maxWidth: '900px' }}>
+      <div className="container-fluid px-4 py-3">
+        <div className="w-100 mx-auto" style={{ maxWidth: '600px' }}>
           
-          {/* Profile Header: Centered layout with increased font scaling */}
-          <div className="d-flex flex-column align-items-center mb-5 pt-4 text-center">
-            <div className="position-relative mb-3">
+          {/* Profile Header: Scaled down to fit screen */}
+          <div className="d-flex flex-column align-items-center mb-4 pt-2 text-center">
+            <div className="mb-2">
               <img
-                src="src\assets\icons\Sigma.png"
-                className="rounded-circle border border-4 border-white shadow-lg"
-                width={120}
+                src="src/assets/icons/Sigma.png"
+                className="rounded-circle border border-2 border-white shadow-sm"
+                width={90} // Reduced from 120
                 alt="profile"
               />
             </div>
-            <h2 className="text-white fw-bold mb-1 display-5">Student User</h2>
-            <p className="fs-4 fw-bold text-white mb-0">student@biust.ac.bw</p>
-            <p className="fs-5 text-white-50">Block A, Room 102</p>
+            <h4 className="text-white fw-bold mb-1">Student User</h4>
+            <p className="small text-white mb-0 opacity-75">student@biust.ac.bw</p>
+            <p className="small text-white-50">Block A, Room 102</p>
           </div>
 
-          <div className="d-flex flex-column gap-4">
+          <div className="d-flex flex-column gap-3">
             
-            {/* App Preferences Section */}
+            {/* App Preferences */}
             <section>
-              <p className="text-white fw-bold text-uppercase mb-3 px-2 fs-5" style={{ letterSpacing: '1px' }}>
+              <p className="text-white-50 fw-bold text-uppercase mb-2 px-2" style={{ fontSize: '12px', letterSpacing: '1px' }}>
                 App Preferences
               </p>
               <div className="d-flex flex-column gap-2">
@@ -66,7 +63,7 @@ export default function StudentProfile() {
 
             {/* Support Section */}
             <section>
-              <p className="text-white fw-bold text-uppercase mb-3 px-2 fs-5" style={{ letterSpacing: '1px' }}>
+              <p className="text-white-50 fw-bold text-uppercase mb-2 px-2" style={{ fontSize: '12px', letterSpacing: '1px' }}>
                 Support & About
               </p>
               <div className="d-flex flex-column gap-2">
@@ -75,15 +72,15 @@ export default function StudentProfile() {
               </div>
             </section>
 
-            {/* Solid background for visibility against  wallpaper */}
-            <section className="mt-4">
+            {/* Logout Button: Reduced size and padding */}
+            <section className="mt-2 pb-5">
               <button 
                 onClick={handleLogout}
-                className="btn w-100 py-3 rounded-4 fw-bold fs-4 border-0 shadow-lg" 
+                className="btn w-100 py-3 rounded-4 fw-bold border-0" 
                 style={{ 
                   background: '#dc2626', 
                   color: 'white',
-                  letterSpacing: '1px'
+                  fontSize: '16px'
                 }}
               >
                 LOGOUT
@@ -97,25 +94,23 @@ export default function StudentProfile() {
   );
 }
 
-/**
- * SettingRow Sub-component
- 
- */
 function SettingRow({ icon, label, sublabel, toggle, checked, onChange, value, arrow }) {
   return (
     <div 
-      className="rounded-4 px-4 py-3 d-flex align-items-center justify-content-between shadow-sm" 
+      className="rounded-4 px-3 py-2 d-flex align-items-center justify-content-between" 
       style={{ 
-        background: 'rgba(255,255,255,0.95)', 
-        backdropFilter: 'blur(10px)', 
-        border: '1px solid rgba(255,255,255,0.3)' 
+        /* FIXED: Using your preferred transparent glass style */
+        background: 'rgba(255, 255, 255, 0.05)', 
+        backdropFilter: 'blur(20px)', 
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)' 
       }}
     >
       <div className="d-flex align-items-center gap-3">
-        <span className="material-symbols-rounded fs-2" style={{ color: '#3d7a77' }}>{icon}</span>
+        <span className="material-symbols-rounded fs-4" style={{ color: '#3d7a77' }}>{icon}</span>
         <div>
-          <span className="fw-bold fs-5 text-dark d-block">{label}</span>
-          {sublabel && <p className="mb-0 fs-6 text-muted">{sublabel}</p>}
+          <span className="fw-bold text-white d-block" style={{ fontSize: '14px' }}>{label}</span>
+          {sublabel && <p className="mb-0 text-white-50" style={{ fontSize: '12px' }}>{sublabel}</p>}
         </div>
       </div>
       
@@ -124,29 +119,29 @@ function SettingRow({ icon, label, sublabel, toggle, checked, onChange, value, a
           onClick={onChange}
           className="position-relative"
           style={{ 
-            width: '54px', 
-            height: '28px', 
-            background: checked ? '#3d7a77' : '#adb5bd', 
-            borderRadius: '14px', 
+            width: '44px', 
+            height: '24px', 
+            background: checked ? '#3d7a77' : 'rgba(255,255,255,0.2)', 
+            borderRadius: '12px', 
             cursor: 'pointer',
             transition: '0.3s'
           }}
         >
           <div 
-            className="position-absolute bg-white rounded-circle shadow-sm" 
+            className="position-absolute bg-white rounded-circle" 
             style={{ 
-              width: '22px', 
-              height: '22px', 
+              width: '18px', 
+              height: '18px', 
               top: '3px', 
-              left: checked ? '29px' : '3px',
+              left: checked ? '23px' : '3px',
               transition: '0.3s' 
             }} 
           />
         </div>
       )}
       
-      {value && <span className="fw-bold text-muted fs-5">{value}</span>}
-      {arrow && <span className="material-symbols-rounded text-muted fs-2">chevron_right</span>}
+      {value && <span className="text-white-50 fw-bold" style={{ fontSize: '13px' }}>{value}</span>}
+      {arrow && <span className="material-symbols-rounded text-white-50 fs-4">chevron_right</span>}
     </div>
   );
 }

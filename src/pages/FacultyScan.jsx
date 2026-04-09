@@ -26,31 +26,42 @@ export default function FacultyScan() {
 
   return (
     <FacultyLayout>
-      <div className="container py-4" style={{ maxWidth: '800px' }}>
+      <div className="container py-4 pb-5" style={{ maxWidth: '800px' }}>
         
-        {/* Search Bar */}
+        {/* Transparent Search Bar */}
         <div className="position-relative mb-4">
           <span className="material-symbols-rounded position-absolute top-50 translate-middle-y ms-3" 
-                style={{ color: 'rgba(255,255,255,0.5)', fontSize: '20px' }}>search</span>
+                style={{ color: 'rgba(255,255,255,0.6)', fontSize: '22px' }}>search</span>
           <input 
-            className="form-control rounded-pill border-0 ps-5 py-3 shadow-sm" 
-            style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', color: 'white' }}
+            className="form-control rounded-pill border-0 ps-5 py-3 shadow-lg" 
+            style={{ 
+              background: 'rgba(255,255,255,0.12)', 
+              backdropFilter: 'blur(15px)', 
+              color: 'white',
+              border: '1px solid rgba(255,255,255,0.1)' 
+            }}
             placeholder="Search reports by ID or Title..." 
             value={search} 
             onChange={(e) => setSearch(e.target.value)} 
           />
         </div>
 
-        {/* Filters Scrollable Row */}
+        {/* Filters Row */}
         <div className="d-flex gap-2 mb-4 overflow-auto pb-2 no-scrollbar">
           {filters.map((f) => (
             <button 
               key={f} 
               onClick={() => setActiveFilter(f)}
-              className="btn rounded-pill px-4 py-2 text-nowrap fw-bold"
+              className="btn rounded-pill px-4 py-2 text-nowrap fw-bold shadow-sm"
               style={activeFilter === f 
-                ? { background: '#3d7a77', color: 'white', fontSize: '13px' } 
-                : { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)' }
+                ? { background: '#3d7a77', color: 'white', fontSize: '13px', border: 'none' } 
+                : { 
+                    background: 'rgba(255,255,255,0.08)', 
+                    color: 'rgba(255,255,255,0.6)', 
+                    fontSize: '13px', 
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(5px)'
+                  }
               }
             >{f}</button>
           ))}
@@ -59,42 +70,49 @@ export default function FacultyScan() {
         {/* Reports List */}
         <div className="d-flex flex-column gap-3">
           {filtered.map((report) => (
-            <div key={report.id} className="rounded-4 p-4 shadow-sm border-0" 
-                 style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(255,255,255,0.3)' }}>
+            <div key={report.id} className="rounded-4 p-4 shadow-lg border-0" 
+                 style={{ 
+                   background: 'rgba(255, 255, 255, 0.1)', 
+                   border: '1px solid rgba(255, 255, 255, 0.1)',
+                   backdropFilter: 'blur(20px)',
+                   WebkitBackdropFilter: 'blur(20px)' 
+                 }}>
               
               <div className="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                  <h6 className="fw-bold mb-1" style={{ color: '#1f2937' }}>{report.title}</h6>
-                  <p className="small mb-0 fw-medium" style={{ color: '#6b7280' }}>
+                  <h6 className="fw-bold mb-1 text-white">{report.title}</h6>
+                  <p className="small mb-0 fw-medium" style={{ color: 'rgba(255,255,255,0.5)' }}>
                     {report.location} <span className="mx-1">•</span> {report.time}
                   </p>
                 </div>
-                <span className="badge rounded-pill px-3 py-2 fw-bold" 
+                <span className="badge rounded-pill px-3 py-2 fw-bold shadow-sm" 
                       style={{ 
-                        background: report.status === 'Resolved' ? '#dcfce7' : '#ecfeff', 
-                        color: report.status === 'Resolved' ? '#16a34a' : '#0891b2',
-                        fontSize: '11px' 
+                        background: report.status === 'Resolved' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(8, 145, 178, 0.15)', 
+                        color: report.status === 'Resolved' ? '#4ade80' : '#22d3ee',
+                        border: report.status === 'Resolved' ? '1px solid rgba(22, 163, 74, 0.2)' : '1px solid rgba(8, 145, 178, 0.2)',
+                        fontSize: '10px' 
                       }}>
                   {report.status.toUpperCase()}
                 </span>
               </div>
 
-              <p className="small my-3 fst-italic" style={{ color: '#4b5563', lineHeight: '1.5' }}>
+              <p className="small my-3 fst-italic" style={{ color: 'rgba(255,255,255,0.75)', lineHeight: '1.5' }}>
                 "{report.desc}"
               </p>
 
-              <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-light">
+              <div className="d-flex justify-content-between align-items-center mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <button
                   onClick={() => navigate(`/faculty-scan/${report.id}`)}
                   className="btn px-4 py-2 rounded-3 fw-bold shadow-sm"
-                  style={{ background: '#3d7a77', color: 'white', fontSize: '12px' }}
+                  style={{ background: '#3d7a77', color: 'white', fontSize: '12px', border: 'none' }}
                 >
                   View Details
                 </button>
                 
                 <button
                   onClick={() => navigate(`/faculty-teams/chat/${report.assignedTo.toLowerCase().replace(' ', '-')}?report=${report.id}`)}
-                  className="btn border-0 p-2 text-muted"
+                  className="btn border-0 p-2 text-white opacity-50"
+                  style={{ transition: '0.3s' }}
                 >
                   <span className="material-symbols-rounded">chat</span>
                 </button>
@@ -105,7 +123,7 @@ export default function FacultyScan() {
           {filtered.length === 0 && (
             <div className="text-center py-5 text-white opacity-50">
               <span className="material-symbols-rounded display-1 mb-3">search_off</span>
-              <p>No reports found matching your search.</p>
+              <p className="fs-5">No reports found matching your search.</p>
             </div>
           )}
         </div>

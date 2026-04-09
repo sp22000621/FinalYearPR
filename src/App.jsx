@@ -18,6 +18,7 @@ import FacultyPerformance from './pages/FacultyPerformance';
 import FacultyAlerts from './pages/FacultyAlerts';
 import FacultyProfile from './pages/FacultyProfile';
 import FacultyHome from './pages/FacultyHome';
+import SCRHome from './pages/SCRHome';
 function App() {
   return (
     <Router>
@@ -43,6 +44,10 @@ function App() {
         <Route path="/faculty-performance" element={<FacultyPerformance />} />
         <Route path="/faculty-alerts" element={<FacultyAlerts />} />
         <Route path="/faculty-profile" element={<FacultyProfile />} />
+
+         {/* SRC Flow */}
+         <Route path="/scr-home" element={<SCRHome />} />
+
       </Routes>
     </Router>
   );

@@ -53,13 +53,31 @@ export default function StudentLogin() {
               required
             />
           </div>
+
+          {/* Primary Login Button */}
           <button 
             type="submit" 
-            className="btn w-100 py-2 fw-bold text-white shadow-sm" 
+            className="btn w-100 py-2 fw-bold text-white shadow-sm mb-3" 
             style={{ backgroundColor: '#003366', borderRadius: '12px' }}
           >
             Login
           </button>
+
+          {/* UPDATED: Secondary SRC Button now navigates to /scr-home */}
+          <button 
+            type="button"
+            onClick={() => navigate('/scr-home')}
+            className="btn w-100 py-2 fw-bold shadow-sm" 
+            style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+              color: '#003366', 
+              borderRadius: '12px',
+              border: 'none'
+            }}
+          >
+            SRC Access
+          </button>
+
           <div className="mt-3">
             <a href="#" className="forgot-link text-white-50 small text-decoration-none">Forgot Password?</a>
           </div>

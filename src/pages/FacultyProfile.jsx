@@ -8,7 +8,7 @@ export default function FacultyProfile() {
 
   return (
     <FacultyLayout>
-      <div className="container py-4 no-scrollbar" style={{ maxWidth: '600px', height: '100vh', overflowY: 'auto' }}>
+      <div className="container py-4 no-scrollbar" style={{ maxWidth: '600px' }}>
         
         {/* Profile Header */}
         <div className="d-flex flex-column align-items-center mb-5 pt-4">
@@ -68,7 +68,7 @@ export default function FacultyProfile() {
   );
 }
 
-// Internal Helper Component for Setting Rows
+
 function SettingRow({ icon, label, toggle, checked, onChange, value, arrow }) {
   return (
     <div 
