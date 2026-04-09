@@ -10,8 +10,6 @@ export default function FacultyLogin() {
 
   const handleLogin = (role) => {
     if (staffId === '12345' && password === '12345') {
-      // FIX: Swapping the logic so 'senior' goes to the existing dashboard
-      // and 'operator' goes to the upcoming Loveable page.
       if (role === 'senior') {
         navigate('/faculty-home'); 
       } else {
@@ -32,35 +30,38 @@ export default function FacultyLogin() {
       placeItems: 'center',
       position: 'relative'
     }}>
-      {/* Back Button */}
+      {/* Back Button - Matched to 32px */}
       <button 
-        className="back-btn" 
+        className="back-btn border-0 bg-transparent text-white" 
         onClick={() => navigate('/')} 
-        style={{ position: 'absolute', top: '20px', left: '20px', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+        style={{ position: 'absolute', top: '20px', left: '20px', cursor: 'pointer' }}
       >
-        <span className="material-symbols-rounded" style={{ fontSize: '40px' }}>arrow_back</span>
+        <span className="material-symbols-rounded" style={{ fontSize: '32px' }}>arrow_back</span>
       </button>
 
       <div className="glass-card text-center shadow-lg" style={{ 
         width: '90%', 
-        maxWidth: '450px', 
-        padding: '40px', 
+        maxWidth: '400px', // Slightly narrower to match student card
+        padding: '30px', // Reduced padding
         borderRadius: '24px',
         background: 'rgba(255, 255, 255, 0.1)',
         backdropFilter: 'blur(15px)',
         border: '1px solid rgba(255, 255, 255, 0.1)'
       }}>
-        <img src={logo} alt="BIUST" className="mb-3" style={{ width: '80px', backgroundColor: 'white', padding: '10px', borderRadius: '15px' }} />
+        {/* Logo - Matched to 60px */}
+        <div className="d-flex justify-content-center mb-3">
+          <img src={logo} alt="BIUST" style={{ width: '60px', backgroundColor: 'white', padding: '10px', borderRadius: '12px' }} />
+        </div>
         
-        <h2 className="text-white fw-bold display-6 mb-2">Faculty Sign In</h2>
-        <p className="text-white-50 fs-5 mb-4">Management Access</p>
+        <h2 className="text-white fw-bold h4 mb-1">Faculty Sign In</h2>
+        <p className="text-white-50 small mb-4">Management Access</p>
 
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="mb-3 text-start">
-            <label className="text-white-50 fw-bold ms-2 mb-1 d-block fs-6">Staff ID</label>
+            <label className="text-white-50 small ms-2 mb-1 d-block">Staff ID</label>
             <input 
               type="text" 
-              className="form-control bg-transparent text-white border-secondary py-3 fs-5 shadow-none" 
+              className="form-control bg-transparent text-white border-secondary shadow-none" 
               placeholder="Enter ID" 
               style={{ borderRadius: '12px' }}
               value={staffId}
@@ -69,10 +70,10 @@ export default function FacultyLogin() {
           </div>
 
           <div className="mb-4 text-start">
-            <label className="text-white-50 fw-bold ms-2 mb-1 d-block fs-6">Password</label>
+            <label className="text-white-50 small ms-2 mb-1 d-block">Password</label>
             <input 
               type="password" 
-              className="form-control bg-transparent text-white border-secondary py-3 fs-5 shadow-none" 
+              className="form-control bg-transparent text-white border-secondary shadow-none" 
               placeholder="••••••••" 
               style={{ borderRadius: '12px' }}
               value={password}
@@ -84,39 +85,37 @@ export default function FacultyLogin() {
           <button 
             type="button"
             onClick={() => handleLogin('operator')}
-            className="btn w-100 py-3 fw-bold text-white mb-3 shadow-sm border-0 transition-all" 
-            style={{ backgroundColor: '#003366', borderRadius: '12px', fontSize: '1.1rem' }}
+            className="btn w-100 py-2 fw-bold text-white mb-3 shadow-sm border-0" 
+            style={{ backgroundColor: '#003366', borderRadius: '12px' }}
           >
             LOGIN
           </button>
 
-          {/* Senior Faculty Login */}
+          {/* Senior Faculty Login - Matches the secondary button style */}
           <button 
             type="button"
             onClick={() => handleLogin('senior')}
-            className="btn w-100 py-3 fw-bold text-white rounded-4 shadow-sm border-0 transition-all" 
+            className="btn w-100 py-2 fw-bold shadow-sm border-0" 
             style={{ 
               background: '#3d7a77', 
-              fontSize: '1.1rem',
-              letterSpacing: '1px'
+              color: 'white',
+              borderRadius: '12px'
             }}
           >
             SENIOR LOGIN
           </button>
           
-          <style>{`
-            .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-            .btn:active { transform: translateY(0); }
-            .forgot-link:hover { color: orange !important; }
-            input::placeholder { color: rgba(255,255,255,0.3) !important; }
-            input:focus { border-color: #3d7a77 !important; }
-          `}</style>
-
-          <div className="mt-4">
-            <a href="#" className="forgot-link text-white-50 fw-bold text-decoration-none fs-6">Forgot Password?</a>
+          <div className="mt-3">
+            <a href="#" className="forgot-link text-white-50 small text-decoration-none">Forgot Password?</a>
           </div>
         </form>
       </div>
+
+      <style>{`
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); transition: 0.2s; }
+        input::placeholder { color: rgba(255,255,255,0.3) !important; font-size: 0.9rem; }
+        input:focus { border-color: #3d7a77 !important; }
+      `}</style>
     </div>
   );
 }
