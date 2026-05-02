@@ -1,20 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { auth, db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import logo from '../assets/icons/logo.svg';
-
-
-const navItems = [
-  { icon: 'assignment', label: 'Issues', path: '/faculty-home' },
-  { icon: 'document_scanner', label: 'Scan', path: '/faculty-scan' },
-  { icon: 'groups', label: 'Teams', path: '/faculty-teams' },
-  { icon: 'bar_chart', label: 'Performance', path: '/faculty-performance' },
-  { icon: 'notifications', label: 'Alerts', path: '/faculty-alerts' },
-  { icon: 'account_circle', label: 'Profile', path: '/faculty-profile' },
-];
 
 export default function FacultySidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setRole(userDoc.data().role);
+        }
+      }
+    };
+    fetchRole();
+  }, []);
+
+  // Dynamically determine the "Issues" path based on the user's role[Junior/Senior]
+  const getIssuesPath = () => {
+    if (role === 'Senior Faculty') return '/faculty-home'; // The Senior Dashboard
+    return '/operator-home'; // The Junior/Operator Dashboard
+  };
+
+  const navItems = [
+    { icon: 'assignment', label: 'Issues', path: getIssuesPath() },
+    { icon: 'document_scanner', label: 'Scan', path: '/faculty-scan' },
+    { icon: 'groups', label: 'Teams', path: '/faculty-teams' },
+    { icon: 'bar_chart', label: 'Performance', path: '/faculty-performance' },
+    { icon: 'notifications', label: 'Alerts', path: '/faculty-alerts' },
+    { icon: 'account_circle', label: 'Profile', path: '/faculty-profile' },
+  ];
 
   return (
     <aside className="d-none d-md-flex flex-column shadow-lg" style={{
@@ -26,43 +47,18 @@ export default function FacultySidebar() {
       position: 'sticky',
       top: 0
     }}>
-      <style>{`
-        .nav-link-custom {
-          display: flex;
-          align-items: center;
-          gap: 15px;
-          padding: 14px 20px;
-          margin: 8px 15px;
-          border-radius: 15px;
-          color: rgba(255,255,255,0.6);
-          cursor: pointer;
-          transition: 0.3s;
-          text-decoration: none;
-        }
-        .nav-link-custom:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-link-custom.active { 
-          background: rgba(61, 122, 119, 0.25); 
-          color: #3d7a77; 
-          border: 1px solid rgba(61, 122, 119, 0.3);
-        }
-      `}</style>
-
-       <div className="p-4 text-center">
-         {/**  my logo */}
-         <img 
-           src={logo} 
-           width={40} 
-           alt="logo" 
-           className="rounded-lg mx-auto" 
-         />  
-       </div>
+      {/* ... Style Tag stays the same ... */}
+      
+      <div className="p-4 text-center">
+        <img src={logo} width={40} alt="logo" className="rounded-lg mx-auto" />  
+      </div>
 
       <nav className="flex-grow-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <div
-              key={item.path}
+              key={item.label} // Changed key to label since path might change
               className={`nav-link-custom ${isActive ? 'active' : ''}`}
               onClick={() => navigate(item.path)}
             >

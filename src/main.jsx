@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 
-// Add Material Symbols to the document head
+//  Material Symbols 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
 link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0';

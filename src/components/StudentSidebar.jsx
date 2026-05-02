@@ -9,7 +9,6 @@ const navItems = [
   { icon: 'account_circle', label: 'Profile', path: '/student-profile' },
 ];
 
-/* Sidebar component for desktop view with glassmorphism effects */
 export default function StudentSidebar() {
   const navigate = useNavigate();
   const location = useLocation();

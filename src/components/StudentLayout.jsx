@@ -3,7 +3,7 @@ import StudentSidebar from './StudentSidebar';
 import StudentBottomNav from './StudentBottomNav';
 import wallpaper from '../assets/images/wallpaper.png';
 
-/* Standardized layout for student dashboard pages */
+/*  layout for student dashboard pages */
 export default function StudentLayout({ children }) {
   return (
     <div

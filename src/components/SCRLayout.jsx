@@ -10,7 +10,6 @@ export default function SCRLayout({ children }) {
       style={{
         minHeight: '100vh',
         width: '100vw',
-        /* SCR gets a slightly darker tint for high-density data oversight */
         background: `linear-gradient(rgba(0,30,60,0.88), rgba(0,30,60,0.88)), url(${wallpaper})`,
         backgroundAttachment: 'fixed',
         backgroundSize: 'cover',

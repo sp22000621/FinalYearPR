@@ -16,7 +16,6 @@ export default function StudentBottomNav() {
     <nav
       className="d-md-none fixed-bottom"
       style={{ 
-        // MATCHED: rgba(255, 255, 255, 0.03) and blur(15px) from your Sidebar
         background: 'rgba(255, 255, 255, 0.03)', 
         backdropFilter: 'blur(15px)', 
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
@@ -33,7 +32,6 @@ export default function StudentBottomNav() {
               onClick={() => navigate(item.path)}
               className="btn border-0 d-flex flex-column align-items-center p-1"
               style={{ 
-                // Color matches the subtle white-50 feel unless active
                 color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', 
                 transition: '0.3s',
                 flex: 1,

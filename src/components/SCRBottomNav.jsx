@@ -4,9 +4,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const scrItems = [
   { label: 'Home', icon: 'home', path: '/scr-home' },
   { label: 'Feed', icon: 'explore', path: '/scr-feed' },
-  { label: 'Groups', icon: 'groups', path: '/scr-communities' }, // Added
+  { label: 'Groups', icon: 'groups', path: '/scr-communities' }, 
   { label: 'Scan', icon: 'document_scanner', path: '/scr-scan' },
-  { label: 'Teams', icon: 'diversity_3', path: '/scr-teams' }, // Added
+  { label: 'Teams', icon: 'diversity_3', path: '/scr-teams' }, 
   { label: 'Stats', icon: 'leaderboard', path: '/scr-performance' },
   { label: 'Me', icon: 'account_circle', path: '/scr-profile' },
 ];
@@ -18,8 +18,7 @@ export default function SCRBottomNav() {
   return (
     <nav className="fixed-bottom d-md-none" 
          style={{ 
-           background: 'rgba(255, 255, 255, 0.03)', // Matched Student Style
-           backdropFilter: 'blur(15px)', 
+           background: 'rgba(255, 255, 255, 0.03)', 
            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
            paddingBottom: 'env(safe-area-inset-bottom)' 
          }}>
@@ -34,7 +33,7 @@ export default function SCRBottomNav() {
               style={{ 
                 color: isActive ? '#fff' : 'rgba(255,255,255,0.5)', 
                 transition: '0.3s',
-                width: '14%', // Slimmer width for 7 items
+                width: '14%', 
                 background: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
                 borderRadius: '8px'
               }}
