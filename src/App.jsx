@@ -50,7 +50,11 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div className="loading-screen" style={{color: 'white', background: '#000', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>Authenticating BIUST Portal...</div>;
+  if (loading) return (
+    <div className="loading-screen" style={{color: 'white', background: '#000', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+      Authenticating BIUST Portal...
+    </div>
+  );
 
   return (
     <Router>
@@ -58,26 +62,28 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         
         {/* Auth Routes */}
-        <Route path="/student-login" element={!user ? <StudentLogin /> : <Navigate to="/student-home" />} />
+        <Route path="/student-login" element={!user ? <StudentLogin /> : <Navigate to="/dashboard-redirector" />} />
         <Route path="/faculty-login" element={!user ? <FacultyLogin /> : <Navigate to="/dashboard-redirector" />} />
 
-        {/* The Redirector: Handled safely here */}
+        {/*Redirector: Decides the dashboard based on Firestore Role */}
         <Route path="/dashboard-redirector" element={
-          !user ? <Navigate to="/faculty-login" /> :
+          !user ? <Navigate to="/" /> :
           role === "Senior Faculty" ? <Navigate to="/faculty-home" /> : 
           role === "Junior Faculty" ? <Navigate to="/operator-home" /> : 
-          <div className="text-white p-5">Role not recognized. Please contact admin.</div>
+          role === "SRC" ? <Navigate to="/scr-home" /> : 
+          role === "Student" ? <Navigate to="/student-home" /> :
+          <div className="text-white p-5">Account verified, but role not assigned. Contact Admin.</div>
         } />
 
-        {/* Student Routes */}
-        <Route path="/student-home" element={user ? <StudentHome /> : <Navigate to="/student-login" />} />
+        {/* Student Flow */}
+        <Route path="/student-home" element={user && role === "Student" ? <StudentHome /> : <Navigate to="/student-login" />} />
         <Route path="/student/report" element={user ? <StudentReport /> : <Navigate to="/student-login" />} />
         <Route path="/student-alerts" element={user ? <StudentAlerts /> : <Navigate to="/student-login" />} />
         <Route path="/student-communities" element={user ? <StudentCommunities /> : <Navigate to="/student-login" />} />
         <Route path="/student-communities/:id" element={user ? <CommunityChat /> : <Navigate to="/student-login" />} />
         <Route path="/student-profile" element={user ? <StudentProfile /> : <Navigate to="/student-login" />} />
 
-        {/* Faculty Routes */}
+        {/* Faculty Flow */}
         <Route path="/operator-home" element={role === "Junior Faculty" ? <FacultyHome /> : <Navigate to="/faculty-login" />} />
         <Route path="/faculty-home" element={role === "Senior Faculty" ? <SeniorFacultyHome /> : <Navigate to="/faculty-login" />} />
         <Route path="/faculty-scan" element={user ? <FacultyScan /> : <Navigate to="/faculty-login" />} />
@@ -87,8 +93,8 @@ function App() {
         <Route path="/faculty-alerts" element={user ? <FacultyAlerts /> : <Navigate to="/faculty-login" />} />
         <Route path="/faculty-profile" element={user ? <FacultyProfile /> : <Navigate to="/faculty-login" />} />
 
-        {/* SRC Routes */}
-        <Route path="/scr-home" element={user ? <SCRHome /> : <Navigate to="/" />} />
+        {/* SRC Flow */}
+        <Route path="/scr-home" element={role === "SRC" ? <SCRHome /> : <Navigate to="/student-login" />} />
         
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />

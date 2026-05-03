@@ -1,87 +1,133 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { db, auth } from '../firebase'; 
+import { 
+  doc, 
+  onSnapshot, 
+  collection, 
+  query, 
+  orderBy, 
+  addDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
 import StudentLayout from '../components/StudentLayout';
-
-const moduleNames = {
-  math101: 'MATH 101',
-  comp201: 'COMP 201',
-  infs303: 'INFS 303',
-  chem102: 'CHEM 102',
-  eng210: 'ENG 210',
-  phys101: 'PHYS 101',
-};
-
-const initialMessages = [
-  { id: 1, sender: 'Thabo M.', text: 'Has anyone started on Assignment 3?', time: '10:15 AM', isMe: false },
-  { id: 2, sender: 'You', text: "Yes, I'm halfway through. The integration part is tricky.", time: '10:18 AM', isMe: true },
-  { id: 3, sender: 'Kago L.', text: 'Can someone share the lecture notes from last Friday?', time: '10:22 AM', isMe: false },
-  { id: 4, sender: 'Lebo S.', text: 'I uploaded them to the shared drive. Check the link in description.', time: '10:25 AM', isMe: false },
-];
 
 export default function CommunityChat() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState('');
+  const [communityData, setCommunityData] = useState(null);
+  const scrollRef = useRef();
 
-  const moduleName = moduleNames[id] || 'Community';
+  // 1. Get the Community Name & Info dynamically
+  useEffect(() => {
+    const docRef = doc(db, "communities", id);
+    const unsub = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setCommunityData(docSnap.data());
+      }
+    });
+    return () => unsub();
+  }, [id]);
 
-  const sendMessage = () => {
+  // 2. Get Real-time Messages from the sub-collection
+  useEffect(() => {
+    const q = query(
+      collection(db, "communities", id, "messages"),
+      orderBy("createdAt", "asc")
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const loadedMessages = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }));
+      setMessages(loadedMessages);
+      
+      // Auto-scroll to bottom when new messages arrive
+      setTimeout(() => {
+        scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    });
+
+    return () => unsub();
+  }, [id]);
+
+  // 3. Send Message to Firestore
+  const sendMessage = async () => {
     if (!newMsg.trim()) return;
-    setMessages([...messages, {
-      id: messages.length + 1,
-      sender: 'You',
-      text: newMsg,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
-    }]);
-    setNewMsg('');
+
+    try {
+      await addDoc(collection(db, "communities", id, "messages"), {
+        text: newMsg,
+        sender: auth.currentUser?.displayName || auth.currentUser?.email || 'Student',
+        uid: auth.currentUser?.uid,
+        createdAt: serverTimestamp(),
+        isMe: true // We store this, but we'll use UID to check logic below
+      });
+      setNewMsg('');
+    } catch (err) {
+      console.error("Error sending message:", err);
+    }
   };
 
   return (
     <StudentLayout>
-
       <div className="d-flex flex-column" style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
         
+        {/* Dynamic Header */}
         <div className="d-flex align-items-center gap-3 p-4" style={{ background: 'rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <button onClick={() => navigate('/student-communities')} className="btn p-0 text-white border-0 shadow-none">
             <span className="material-symbols-rounded fs-2">arrow_back</span>
           </button>
-          <div className="rounded-4 d-flex align-items-center justify-content-center" style={{ background: '#3d7a77', width: '50px', height: '50px' }}>
-            <span className="material-symbols-rounded text-white fs-3">school</span>
+          <div className="rounded-4 d-flex align-items-center justify-content-center" 
+               style={{ background: communityData?.category === 'Official' ? '#f59e0b' : '#3d7a77', width: '50px', height: '50px' }}>
+            <span className="material-symbols-rounded text-white fs-3">
+              {communityData?.category === 'Official' ? 'verified_user' : 'school'}
+            </span>
           </div>
-          <div>
-            <h4 className="fw-bold mb-0 text-white">{moduleName}</h4>
-            <span className="text-white-50 fs-6">245 active members</span>
+          <div className="text-start">
+            <h4 className="fw-bold mb-0 text-white">{communityData?.name || 'Loading...'}</h4>
+            <span className="text-white-50 fs-6">Active Community</span>
           </div>
         </div>
 
-        {/* Messages  */}
-        <div className="flex-grow-1 p-4 overflow-y-auto d-flex flex-column gap-3">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`d-flex ${msg.isMe ? 'justify-end ms-auto' : 'justify-start me-auto'}`} style={{ maxWidth: '85%' }}>
-              <div 
-                className="p-3 rounded-4" 
-                style={{ 
-                  background: msg.isMe ? '#3d7a77' : 'rgba(255, 255, 255, 0.95)',
-                  color: msg.isMe ? 'white' : '#222',
-                  fontSize: '1.1rem',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                }}
-              >
-                {!msg.isMe && <p className="fw-bold mb-1" style={{ color: '#3d7a77', fontSize: '0.9rem' }}>{msg.sender}</p>}
-                <p className="mb-1">{msg.text}</p>
-                <p className="text-end mb-0" style={{ fontSize: '0.75rem', opacity: 0.6 }}>{msg.time}</p>
+        {/* Real-time Messages Area */}
+        <div className="flex-grow-1 p-4 overflow-y-auto d-flex flex-column gap-3 no-scrollbar">
+          {messages.map((msg) => {
+            // Check if the message was sent by the current logged-in user
+            const isMe = msg.uid === auth.currentUser?.uid;
+
+            return (
+              <div key={msg.id} className={`d-flex ${isMe ? 'justify-content-end ms-auto' : 'justify-content-start me-auto'}`} style={{ maxWidth: '85%' }}>
+                <div 
+                  className="p-3 rounded-4 text-start" 
+                  style={{ 
+                    background: isMe ? '#3d7a77' : 'rgba(255, 255, 255, 0.95)',
+                    color: isMe ? 'white' : '#222',
+                    fontSize: '1rem',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {!isMe && <p className="fw-bold mb-1" style={{ color: '#3d7a77', fontSize: '0.8rem' }}>{msg.sender}</p>}
+                  <p className="mb-1">{msg.text}</p>
+                  <p className="text-end mb-0" style={{ fontSize: '0.7rem', opacity: 0.6 }}>
+                    {msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...'}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          {/* Invisible element to anchor the scroll */}
+          <div ref={scrollRef} />
         </div>
 
-        {/* Input Bar - Full width across the bottom */}
+        {/* Input Bar */}
         <div className="p-4" style={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="d-flex gap-2 mx-auto" style={{ maxWidth: '1200px' }}>
              <input
-              className="form-control py-3 px-4 fs-5 border-0"
+              className="form-control py-3 px-4 fs-5 border-0 shadow-none"
               placeholder="Type a message..."
               style={{ background: 'rgba(255, 255, 255, 0.9)', borderRadius: '15px' }}
               value={newMsg}

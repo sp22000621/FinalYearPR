@@ -1,26 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { db, auth } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import FacultyLayout from '../components/FacultyLayout';
 
+// Mock data for now - will be replaced by your 'reports' collection later
 const allReports = [
   { id: 'REQ-4092', title: 'Leaking Toilet', location: 'Block B, Room 102', assignedTo: 'Dave', status: 'Assigned', category: 'Plumbing', time: 'Assigned Today', desc: 'The toilet in our en-suite bathroom has been leaking from the base since yesterday.' },
   { id: 'REQ-4088', title: 'No Hot Water', location: 'Block A, Room 305', assignedTo: 'Lumbiel', status: 'Assigned', category: 'Plumbing', time: 'Assigned Yesterday', desc: 'The shower is not dispensing any hot water. Only freezing cold water is coming out.' },
-  { id: 'REQ-4075', title: 'Clogged Sink', location: 'Block C, Kitchen', assignedTo: 'Dave', status: 'Resolved', category: 'Plumbing', time: 'Resolved 2 days ago', desc: 'The communal kitchen sink on the second floor is completely blocked.' },
-  { id: 'REQ-4101', title: 'Faulty Socket', location: 'Block C, Room 104', assignedTo: 'Mr Peo', status: 'Assigned', category: 'Electrical', time: 'Assigned Today', desc: 'Socket sparks when plugging in devices.' },
-  { id: 'REQ-4078', title: 'Broken Door Hinge', location: 'Block A, Room 302', assignedTo: 'Lumbiel', status: 'Resolved', category: 'Structural', time: 'Resolved 3 days ago', desc: 'Main door to the dorm room is sagging.' },
+  { id: 'REQ-4101', title: 'Faulty Socket', location: 'Block C, Room 104', assignedTo: 'Max', status: 'Assigned', category: 'Electrical', time: 'Assigned Today', desc: 'Socket sparks when plugging in devices.' },
 ];
-
-const filters = ['This Week', 'Dave', 'Me', 'Last Week'];
 
 export default function FacultyScan() {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState('This Week');
+  const [activeFilter, setActiveFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [myName, setMyName] = useState('');
+
+  // Fetch the logged-in user's name to use as a filter
+  useEffect(() => {
+    const fetchMyProfile = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            // Using firstName for the filter label
+            setMyName(userDoc.data().firstName || 'Me');
+          }
+        } catch (err) {
+          console.error("Error fetching name for filter:", err);
+        }
+      }
+    };
+    fetchMyProfile();
+  }, []);
+
+  // Dynamic filter list
+  const filterList = ['All', 'This Week', myName || 'Me', 'Last Week'];
 
   const filtered = allReports.filter((r) => {
-    const matchSearch = r.title.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase());
-    if (activeFilter === 'Dave') return matchSearch && r.assignedTo === 'Dave';
-    if (activeFilter === 'Me') return matchSearch && r.assignedTo === 'Kagiso';
+    const matchSearch = 
+      r.title.toLowerCase().includes(search.toLowerCase()) || 
+      r.id.toLowerCase().includes(search.toLowerCase());
+
+    // Logic: If the active filter is your name, only show reports assigned to you
+    if (activeFilter === myName) {
+      return matchSearch && r.assignedTo === myName;
+    }
+    
     return matchSearch;
   });
 
@@ -46,9 +74,9 @@ export default function FacultyScan() {
           />
         </div>
 
-        {/* Filters Row */}
+        {/* Dynamic Filters Row */}
         <div className="d-flex gap-2 mb-4 overflow-auto pb-2 no-scrollbar">
-          {filters.map((f) => (
+          {filterList.map((f) => (
             <button 
               key={f} 
               onClick={() => setActiveFilter(f)}
@@ -63,19 +91,20 @@ export default function FacultyScan() {
                     backdropFilter: 'blur(5px)'
                   }
               }
-            >{f}</button>
+            >
+              {f}
+            </button>
           ))}
         </div>
 
         {/* Reports List */}
         <div className="d-flex flex-column gap-3">
           {filtered.map((report) => (
-            <div key={report.id} className="rounded-4 p-4 shadow-lg border-0" 
+            <div key={report.id} className="rounded-4 p-4 shadow-lg" 
                  style={{ 
                    background: 'rgba(255, 255, 255, 0.1)', 
                    border: '1px solid rgba(255, 255, 255, 0.1)',
                    backdropFilter: 'blur(20px)',
-                   WebkitBackdropFilter: 'blur(20px)' 
                  }}>
               
               <div className="d-flex justify-content-between align-items-start mb-2">
@@ -85,22 +114,21 @@ export default function FacultyScan() {
                     {report.location} <span className="mx-1">•</span> {report.time}
                   </p>
                 </div>
-                <span className="badge rounded-pill px-3 py-2 fw-bold shadow-sm" 
+                <span className="badge rounded-pill px-3 py-2 fw-bold" 
                       style={{ 
                         background: report.status === 'Resolved' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(8, 145, 178, 0.15)', 
                         color: report.status === 'Resolved' ? '#4ade80' : '#22d3ee',
-                        border: report.status === 'Resolved' ? '1px solid rgba(22, 163, 74, 0.2)' : '1px solid rgba(8, 145, 178, 0.2)',
                         fontSize: '10px' 
                       }}>
                   {report.status.toUpperCase()}
                 </span>
               </div>
 
-              <p className="small my-3 fst-italic" style={{ color: 'rgba(255,255,255,0.75)', lineHeight: '1.5' }}>
+              <p className="small my-3 fst-italic" style={{ color: 'rgba(255,255,255,0.75)' }}>
                 "{report.desc}"
               </p>
 
-              <div className="d-flex justify-content-between align-items-center mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top border-white border-opacity-10">
                 <button
                   onClick={() => navigate(`/faculty-scan/${report.id}`)}
                   className="btn px-4 py-2 rounded-3 fw-bold shadow-sm"
@@ -112,7 +140,6 @@ export default function FacultyScan() {
                 <button
                   onClick={() => navigate(`/faculty-teams/chat/${report.assignedTo.toLowerCase().replace(' ', '-')}?report=${report.id}`)}
                   className="btn border-0 p-2 text-white opacity-50"
-                  style={{ transition: '0.3s' }}
                 >
                   <span className="material-symbols-rounded">chat</span>
                 </button>
@@ -123,7 +150,7 @@ export default function FacultyScan() {
           {filtered.length === 0 && (
             <div className="text-center py-5 text-white opacity-50">
               <span className="material-symbols-rounded display-1 mb-3">search_off</span>
-              <p className="fs-5">No reports found matching your search.</p>
+              <p className="fs-5">No reports found.</p>
             </div>
           )}
         </div>

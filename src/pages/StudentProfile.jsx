@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebase'; // Import firebase config
 import StudentLayout from '../components/StudentLayout';
 
 export default function StudentProfile() {
@@ -7,8 +8,17 @@ export default function StudentProfile() {
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    navigate('/student-login');
+  const handleLogout = async () => {
+    try {
+      // 1. Tell Firebase to clear the session/token
+      await auth.signOut(); 
+      
+      // 2. Clear state and move the user back to the landing or login page
+      navigate('/'); 
+    } catch (error) {
+      console.error("Logout Error:", error);
+      alert("Failed to log out. Please try again.");
+    }
   };
 
   return (
@@ -16,13 +26,13 @@ export default function StudentProfile() {
       <div className="container-fluid px-4 py-3">
         <div className="w-100 mx-auto" style={{ maxWidth: '600px' }}>
           
-          {/* Profile Header: Scaled down to fit screen */}
+          {/* Profile Header */}
           <div className="d-flex flex-column align-items-center mb-4 pt-2 text-center">
             <div className="mb-2">
               <img
                 src="src/assets/icons/Sigma.png"
                 className="rounded-circle border border-2 border-white shadow-sm"
-                width={90} // Reduced from 120
+                width={90}
                 alt="profile"
               />
             </div>
@@ -72,15 +82,16 @@ export default function StudentProfile() {
               </div>
             </section>
 
-            {/* Logout Button: Reduced size and padding */}
+            {/* Logout Button */}
             <section className="mt-2 pb-5">
               <button 
                 onClick={handleLogout}
-                className="btn w-100 py-3 rounded-4 fw-bold border-0" 
+                className="btn w-100 py-3 rounded-4 fw-bold border-0 shadow" 
                 style={{ 
                   background: '#dc2626', 
                   color: 'white',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  letterSpacing: '1px'
                 }}
               >
                 LOGOUT
@@ -94,12 +105,12 @@ export default function StudentProfile() {
   );
 }
 
+// Sub-component for the rows
 function SettingRow({ icon, label, sublabel, toggle, checked, onChange, value, arrow }) {
   return (
     <div 
       className="rounded-4 px-3 py-2 d-flex align-items-center justify-content-between" 
       style={{ 
-        /* FIXED: Using your preferred transparent glass style */
         background: 'rgba(255, 255, 255, 0.05)', 
         backdropFilter: 'blur(20px)', 
         WebkitBackdropFilter: 'blur(20px)',

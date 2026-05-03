@@ -1,50 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth } from '../firebase';
+import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
 import logo from '../assets/icons/logo.svg';
 import wallpaper from '../assets/images/wallpaper.png'; 
 
 export default function FacultyLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState(''); // Firebase Auth
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
 
-  const handleLogin = async (e) => {
+  // CONFIG: Magic Link settings
+  const actionCodeSettings = {
+    url: window.location.href, // Returns user back to this exact page
+    handleCodeInApp: true,
+  };
+
+  // EFFECT: Catch the user when they click the link in their email
+  useEffect(() => {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      setIsLoggingIn(true);
+      let savedEmail = window.localStorage.getItem('emailForSignIn');
+      
+      // If user opened link on a different device/browser, ask for email
+      if (!savedEmail) {
+        savedEmail = window.prompt('Please provide your BIUST email for confirmation');
+      }
+
+      signInWithEmailLink(auth, savedEmail, window.location.href)
+        .then(() => {
+          window.localStorage.removeItem('emailForSignIn');
+          navigate('/dashboard-redirector'); // App.jsx handle the role routing
+        })
+        .catch((error) => {
+          console.error(error);
+          setStatusMsg("Link expired or invalid. Please request a new one.");
+          setIsLoggingIn(false);
+        });
+    }
+  }, [navigate]);
+
+  const handleMagicLinkRequest = async (e) => {
     e.preventDefault();
     setIsLoggingIn(true);
+    setStatusMsg('');
 
     try {
-      // 1. Firebase Authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // 2. Database Role Check
-      const q = query(collection(db, "users"), where("email", "==", email));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        const userData = querySnapshot.docs[0].data();
-        const role = userData.role;
-
-        // 3. Smart Redirect
-        if (role === "Senior Faculty") {
-          navigate('/faculty-home'); 
-        } else if (role === "Junior Faculty") {
-          navigate('/operator-home');
-        } else {
-          alert("Access Denied: Role not recognized.");
-          await auth.signOut();
-        }
-      } else {
-        alert("No faculty record found for this account.");
-        await auth.signOut();
-      }
+      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+      window.localStorage.setItem('emailForSignIn', email);
+      setStatusMsg("Success! Check your email for the login link.");
     } catch (error) {
       console.error(error);
-      alert("Invalid Credentials or Network Error");
+      setStatusMsg("Failed to send link. Check your connection.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -84,10 +92,16 @@ export default function FacultyLogin() {
         </div>
         
         <h2 className="text-white fw-bold h4 mb-1">Faculty Sign In</h2>
-        <p className="text-white-50 small mb-4">Management Access</p>
+        <p className="text-white-50 small mb-4">Passwordless Management Access</p>
 
-        <form onSubmit={handleLogin}>
-          <div className="mb-3 text-start">
+        {statusMsg && (
+          <div className="mb-3 small p-2 rounded" style={{ background: 'rgba(255,255,255,0.1)', color: '#3d7a77', border: '1px solid #3d7a77' }}>
+            {statusMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleMagicLinkRequest}>
+          <div className="mb-4 text-start">
             <label className="text-white-50 small ms-2 mb-1 d-block">BIUST Email</label>
             <input 
               type="email" 
@@ -100,34 +114,23 @@ export default function FacultyLogin() {
             />
           </div>
 
-          <div className="mb-4 text-start">
-            <label className="text-white-50 small ms-2 mb-1 d-block">Password</label>
-            <input 
-              type="password" 
-              className="form-control bg-transparent text-white border-secondary shadow-none" 
-              placeholder="••••••••" 
-              style={{ borderRadius: '12px' }}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
           <button 
             type="submit"
             disabled={isLoggingIn}
-            className="btn w-100 py-2 fw-bold text-white mb-3 shadow-sm border-0" 
+            className="btn w-100 py-3 fw-bold text-white mb-3 shadow-sm border-0" 
             style={{ 
               backgroundColor: isLoggingIn ? '#2c3e50' : '#003366', 
               borderRadius: '12px',
               transition: 'all 0.3s'
             }}
           >
-            {isLoggingIn ? 'AUTHENTICATING...' : 'LOGIN'}
+            {isLoggingIn ? 'SENDING LINK...' : 'SEND MAGIC LINK'}
           </button>
           
           <div className="mt-2">
-            <a href="#" className="forgot-link text-white-50 small text-decoration-none">Forgot Password?</a>
+            <p className="text-white-50 small">
+              We'll email you a secure link to sign in instantly.
+            </p>
           </div>
         </form>
       </div>

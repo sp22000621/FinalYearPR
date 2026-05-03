@@ -1,8 +1,7 @@
-// Import the functions you need from the SDKs you need
+// Import the functions needed from the SDKs
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 
-// FIX: Added these two missing imports
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -21,6 +20,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-// Export these so we can use them in your Login and Dashboard pages
+// Export to use them in Login and Dashboard pages
 export const auth = getAuth(app);
 export const db = getFirestore(app);
