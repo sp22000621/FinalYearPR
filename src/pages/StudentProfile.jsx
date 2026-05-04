@@ -1,25 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase'; // Import firebase config
+import { auth, db } from '../firebase'; 
+import { doc, getDoc } from 'firebase/firestore';
 import StudentLayout from '../components/StudentLayout';
 
 export default function StudentProfile() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const docRef = doc(db, "students", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setUserData(docSnap.data());
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const handleLogout = async () => {
     try {
-      // 1. Tell Firebase to clear the session/token
       await auth.signOut(); 
-      
-      // 2. Clear state and move the user back to the landing or login page
       navigate('/'); 
     } catch (error) {
       console.error("Logout Error:", error);
-      alert("Failed to log out. Please try again.");
     }
   };
+
+  // UI-Avatars for the profile picture
+  const avatarUrl = `https://ui-avatars.com/api/?name=${userData?.firstName || 'P'}+${userData?.lastName || 'S'}&background=3d7a77&color=fff&size=128`;
 
   return (
     <StudentLayout>
@@ -28,24 +50,41 @@ export default function StudentProfile() {
           
           {/* Profile Header */}
           <div className="d-flex flex-column align-items-center mb-4 pt-2 text-center">
-            <div className="mb-2">
+            <div className="mb-3">
               <img
-                src="src/assets/icons/Sigma.png"
-                className="rounded-circle border border-2 border-white shadow-sm"
-                width={90}
+                src={avatarUrl}
+                className="rounded-circle border border-3 border-white shadow-lg"
+                width={100}
                 alt="profile"
               />
             </div>
-            <h4 className="text-white fw-bold mb-1">Student User</h4>
-            <p className="small text-white mb-0 opacity-75">student@biust.ac.bw</p>
-            <p className="small text-white-50">Block A, Room 102</p>
+            <h4 className="text-white fw-bold mb-1">
+              {loading ? "Loading..." : `${userData?.firstName} ${userData?.lastName}`}
+            </h4>
+            <p className="small text-white mb-0 opacity-75">{userData?.email}</p>
+            {/* Adjusted to use the room_number field from  Firestore */}
+            <p className="small text-white-50 mt-1">
+               <span className="material-symbols-rounded fs-6 align-middle me-1">location_on</span>
+               {userData?.room_number || 'Location Not Set'}
+            </p>
           </div>
 
           <div className="d-flex flex-column gap-3">
             
-            {/* App Preferences */}
             <section>
-              <p className="text-white-50 fw-bold text-uppercase mb-2 px-2" style={{ fontSize: '12px', letterSpacing: '1px' }}>
+              <p className="text-white-50 fw-bold text-uppercase mb-2 px-2" style={{ fontSize: '11px', letterSpacing: '1.5px' }}>
+                Account Information
+              </p>
+              <div className="d-flex flex-column gap-2">
+                {/* Fixed the key to student_id to match  screenshot */}
+                <SettingRow icon="badge" label="Student ID" value={userData?.student_id || 'N/A'} />
+                <SettingRow icon="account_balance" label="Department" value={userData?.department || 'N/A'} />
+                <SettingRow icon="person" label="Role" value={userData?.rank || 'Member'} />
+              </div>
+            </section>
+
+            <section>
+              <p className="text-white-50 fw-bold text-uppercase mb-2 px-2" style={{ fontSize: '11px', letterSpacing: '1.5px' }}>
                 App Preferences
               </p>
               <div className="d-flex flex-column gap-2">
@@ -63,35 +102,18 @@ export default function StudentProfile() {
                   checked={darkMode} 
                   onChange={() => setDarkMode(!darkMode)} 
                 />
-                <SettingRow 
-                  icon="language" 
-                  label="Language" 
-                  value="English" 
-                />
               </div>
             </section>
 
-            {/* Support Section */}
-            <section>
-              <p className="text-white-50 fw-bold text-uppercase mb-2 px-2" style={{ fontSize: '12px', letterSpacing: '1px' }}>
-                Support & About
-              </p>
-              <div className="d-flex flex-column gap-2">
-                <SettingRow icon="help" label="Help & FAQ" arrow />
-                <SettingRow icon="bug_report" label="Report a Bug" arrow />
-              </div>
-            </section>
-
-            {/* Logout Button */}
-            <section className="mt-2 pb-5">
+            <section className="mt-4 pb-5">
               <button 
                 onClick={handleLogout}
-                className="btn w-100 py-3 rounded-4 fw-bold border-0 shadow" 
+                className="btn w-100 py-3 rounded-4 fw-bold border-0 shadow-lg" 
                 style={{ 
-                  background: '#dc2626', 
+                  background: 'linear-gradient(45deg, #dc2626, #991b1b)', 
                   color: 'white',
-                  fontSize: '16px',
-                  letterSpacing: '1px'
+                  fontSize: '15px',
+                  letterSpacing: '2px'
                 }}
               >
                 LOGOUT
@@ -105,27 +127,26 @@ export default function StudentProfile() {
   );
 }
 
-// Sub-component for the rows
-function SettingRow({ icon, label, sublabel, toggle, checked, onChange, value, arrow }) {
+function SettingRow({ icon, label, toggle, checked, onChange, value }) {
   return (
     <div 
-      className="rounded-4 px-3 py-2 d-flex align-items-center justify-content-between" 
+      className="rounded-4 px-3 py-3 d-flex align-items-center justify-content-between" 
       style={{ 
         background: 'rgba(255, 255, 255, 0.05)', 
-        backdropFilter: 'blur(20px)', 
-        WebkitBackdropFilter: 'blur(20px)',
+        backdropFilter: 'blur(10px)', 
         border: '1px solid rgba(255, 255, 255, 0.1)' 
       }}
     >
       <div className="d-flex align-items-center gap-3">
-        <span className="material-symbols-rounded fs-4" style={{ color: '#3d7a77' }}>{icon}</span>
+        <div className="d-flex align-items-center justify-content-center rounded-3" style={{ width: '35px', height: '35px', background: 'rgba(61, 122, 119, 0.2)' }}>
+            <span className="material-symbols-rounded fs-5" style={{ color: '#4ade80' }}>{icon}</span>
+        </div>
         <div>
           <span className="fw-bold text-white d-block" style={{ fontSize: '14px' }}>{label}</span>
-          {sublabel && <p className="mb-0 text-white-50" style={{ fontSize: '12px' }}>{sublabel}</p>}
         </div>
       </div>
       
-      {toggle && (
+      {toggle ? (
         <div
           onClick={onChange}
           className="position-relative"
@@ -139,7 +160,7 @@ function SettingRow({ icon, label, sublabel, toggle, checked, onChange, value, a
           }}
         >
           <div 
-            className="position-absolute bg-white rounded-circle" 
+            className="position-absolute bg-white rounded-circle shadow-sm" 
             style={{ 
               width: '18px', 
               height: '18px', 
@@ -149,10 +170,9 @@ function SettingRow({ icon, label, sublabel, toggle, checked, onChange, value, a
             }} 
           />
         </div>
+      ) : (
+        <span className="text-white-50 fw-semibold" style={{ fontSize: '13px' }}>{value}</span>
       )}
-      
-      {value && <span className="text-white-50 fw-bold" style={{ fontSize: '13px' }}>{value}</span>}
-      {arrow && <span className="material-symbols-rounded text-white-50 fs-4">chevron_right</span>}
     </div>
   );
 }

@@ -33,9 +33,26 @@ function App() {
       setLoading(true);
       if (firebaseUser) {
         try {
-          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (userDoc.exists()) {
-            setRole(userDoc.data().role);
+          // 1. Check students collection first
+          const studentDoc = await getDoc(doc(db, "students", firebaseUser.uid));
+          
+          if (studentDoc.exists()) {
+            const studentData = studentDoc.data();
+            // Map isSRC field to internal role state
+            setRole(studentData.isSRC ? "SRC" : "Student");
+          } else {
+            // 2. Check faculty collection if not in students
+            const facultyDoc = await getDoc(doc(db, "faculty", firebaseUser.uid));
+            
+            if (facultyDoc.exists()) {
+              const facultyData = facultyDoc.data();
+              // Map 'rank' field from Firestore (image_c56a66.jpg) to internal roles
+              if (facultyData.rank === "Senior Maintance Director") {
+                setRole("Senior Faculty");
+              } else {
+                setRole("Junior Faculty");
+              }
+            }
           }
           setUser(firebaseUser);
         } catch (error) {
@@ -52,7 +69,7 @@ function App() {
 
   if (loading) return (
     <div className="loading-screen" style={{color: 'white', background: '#000', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-      Authenticating BIUST Portal...
+      Authenticating BIUST Reporting Portal...
     </div>
   );
 
@@ -65,19 +82,19 @@ function App() {
         <Route path="/student-login" element={!user ? <StudentLogin /> : <Navigate to="/dashboard-redirector" />} />
         <Route path="/faculty-login" element={!user ? <FacultyLogin /> : <Navigate to="/dashboard-redirector" />} />
 
-        {/*Redirector: Decides the dashboard based on Firestore Role */}
+        {/* Redirector:uses mapped roles from rank/isSRC */}
         <Route path="/dashboard-redirector" element={
           !user ? <Navigate to="/" /> :
           role === "Senior Faculty" ? <Navigate to="/faculty-home" /> : 
           role === "Junior Faculty" ? <Navigate to="/operator-home" /> : 
           role === "SRC" ? <Navigate to="/scr-home" /> : 
           role === "Student" ? <Navigate to="/student-home" /> :
-          <div className="text-white p-5">Account verified, but role not assigned. Contact Admin.</div>
+          <div className="text-white p-5 bg-dark vh-100">Account verified, but profile mapping failed. Contact Admin.</div>
         } />
 
         {/* Student Flow */}
         <Route path="/student-home" element={user && role === "Student" ? <StudentHome /> : <Navigate to="/student-login" />} />
-        <Route path="/student/report" element={user ? <StudentReport /> : <Navigate to="/student-login" />} />
+        <Route path="/student-report" element={user ? <StudentReport /> : <Navigate to="/student-login" />} />
         <Route path="/student-alerts" element={user ? <StudentAlerts /> : <Navigate to="/student-login" />} />
         <Route path="/student-communities" element={user ? <StudentCommunities /> : <Navigate to="/student-login" />} />
         <Route path="/student-communities/:id" element={user ? <CommunityChat /> : <Navigate to="/student-login" />} />

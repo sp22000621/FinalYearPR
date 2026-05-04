@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db, auth } from '../firebase'; // Import your config
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase'; 
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import StudentLayout from '../components/StudentLayout';
 
 const categories = [
@@ -19,10 +19,29 @@ export default function StudentReport() {
   
   const [selected, setSelected] = useState(null);
   const [details, setDetails] = useState('');
-  const [location, setLocation] = useState(''); // Added location field
+  const [location, setLocation] = useState('');
   const [files, setFiles] = useState([]); 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [studentData, setStudentData] = useState(null);
+
+  // Fetch the current student's name/details to attach to the report
+  useEffect(() => {
+    const fetchStudentProfile = async () => {
+      if (auth.currentUser) {
+        try {
+          const userRef = doc(db, "students", auth.currentUser.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            setStudentData(userSnap.data());
+          }
+        } catch (err) {
+          console.error("Error fetching profile for report:", err);
+        }
+      }
+    };
+    fetchStudentProfile();
+  }, []);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -34,24 +53,29 @@ export default function StudentReport() {
   };
 
   const handleSubmit = async () => {
+    if (!details.trim() || !location.trim()) {
+      alert("Please provide both a location and issue details.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // 1. Create the database entry
+      // Create the database entry with attached student info
       await addDoc(collection(db, "reports"), {
         category: selected,
-        issue: selected, // Using category as title for now
+        issue: selected,
         description: details,
         location: location || "Not Specified",
         status: 'Open',
         studentId: auth.currentUser.uid,
         studentEmail: auth.currentUser.email,
+        // Using the name fields verified from Firestore
+        studentName: studentData ? `${studentData.firstName} ${studentData.lastName}` : "Unknown Student",
+        studentDepartment: studentData?.department || "N/A",
         createdAt: serverTimestamp(),
         isEscalated: selected === 'Emergency Alert',
         assignedTo: null
       });
-
-      // Note: File upload to Firebase Storage would happen here 
-      // if you decide to store actual images later.
 
       setSubmitted(true);
       setTimeout(() => navigate('/student-home'), 2000);
@@ -130,7 +154,6 @@ export default function StudentReport() {
                   onChange={(e) => setDetails(e.target.value)}
                 />
 
-                {/* ATTACHMENT SECTION (UI ONLY FOR NOW) */}
                 <div className="mb-4">
                   <label className="text-white-50 small mb-2 d-block">Attachments</label>
                   <input type="file" multiple ref={fileInputRef} onChange={handleFileChange} className="d-none" accept="image/*,video/*" />

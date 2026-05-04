@@ -8,10 +8,9 @@ import '../styles/Dashboard.css';
 export default function StudentHome() {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
-  const [userData, setUserData] = useState(null); // State for Prince's profile
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Helper to determine badge colors based on status
   const getStatusStyles = (status) => {
     switch (status) {
       case 'Open': return { color: '#4ddbff', bg: 'rgba(8, 145, 178, 0.2)' };
@@ -22,22 +21,31 @@ export default function StudentHome() {
   };
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    const user = auth.currentUser;
+    if (!user) {
+      navigate('/');
+      return;
+    }
 
-    // 1. Fetch User Profile (Prince Sebina)
     const fetchProfile = async () => {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const userSnap = await getDoc(userRef);
-      if (userSnap.exists()) {
-        setUserData(userSnap.data());
+      try {
+        // Pointing to the 'students' collection verified in Firestore
+        const studentRef = doc(db, "students", user.uid);
+        const studentSnap = await getDoc(studentRef);
+        
+        if (studentSnap.exists()) {
+          setUserData(studentSnap.data());
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
       }
     };
+    
     fetchProfile();
 
-    // 2. Reference the reports collection (Live Listener)
     const q = query(
       collection(db, "reports"),
-      where("studentId", "==", auth.currentUser.uid),
+      where("studentId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
 
@@ -54,7 +62,7 @@ export default function StudentHome() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const glassStyle = {
     background: 'rgba(255, 255, 255, 0.05)', 
@@ -82,14 +90,11 @@ export default function StudentHome() {
               alt="profile" 
             />
             <div className="text-white">
-              {/* This now pulls "Prince" from your Firestore users collection */}
               <h6 className="mb-0 fw-bold">Hello, {userData?.firstName || 'Student'}!</h6>
-              <small className="opacity-75">{userData?.department || 'Student Portal'}</small>
+              <small className="opacity-75">{userData?.department || 'BIUST Student'}</small>
             </div>
           </div>
-          <button className="btn text-white opacity-75 p-0" onClick={() => navigate('/student/settings')}>
-            <span className="material-symbols-rounded">settings</span>
-          </button>
+
         </header>
 
         <div className="container-fluid px-4 pb-5">
@@ -104,13 +109,13 @@ export default function StudentHome() {
               </button>
             </div>
             <div className="col-12 col-md-6">
-              <button className="my-issues-card shadow-sm h-100 w-100 border-0 d-flex align-items-center gap-3 px-4 rounded-4">
+              <div className="my-issues-card shadow-sm h-100 w-100 border-0 d-flex align-items-center gap-3 px-4 rounded-4 bg-white">
                 <span className="material-symbols-rounded fs-5" style={{color: '#3d7a77'}}>assignment</span>
                 <div className="text-start text-dark">
                   <h6 className="mb-0 fw-bold">Total Issues: {reports.length}</h6>
                   <small className="text-muted">Tracking your history</small>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
 

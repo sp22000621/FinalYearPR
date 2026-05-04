@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+// Import db and auth from local firebase config file
 import { db, auth } from '../firebase'; 
 import { 
   doc, 
@@ -22,17 +23,24 @@ export default function CommunityChat() {
 
   // 1. Get the Community Name & Info dynamically
   useEffect(() => {
+    if (!id) return;
+    
     const docRef = doc(db, "communities", id);
     const unsub = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setCommunityData(docSnap.data());
       }
+    }, (error) => {
+      console.error("Error fetching community info:", error);
     });
+    
     return () => unsub();
   }, [id]);
 
   // 2. Get Real-time Messages from the sub-collection
   useEffect(() => {
+    if (!id) return;
+
     const q = query(
       collection(db, "communities", id, "messages"),
       orderBy("createdAt", "asc")
@@ -49,6 +57,8 @@ export default function CommunityChat() {
       setTimeout(() => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
+    }, (error) => {
+      console.error("Error fetching messages:", error);
     });
 
     return () => unsub();
@@ -56,15 +66,14 @@ export default function CommunityChat() {
 
   // 3. Send Message to Firestore
   const sendMessage = async () => {
-    if (!newMsg.trim()) return;
+    if (!newMsg.trim() || !auth.currentUser) return;
 
     try {
       await addDoc(collection(db, "communities", id, "messages"), {
         text: newMsg,
         sender: auth.currentUser?.displayName || auth.currentUser?.email || 'Student',
         uid: auth.currentUser?.uid,
-        createdAt: serverTimestamp(),
-        isMe: true // We store this, but we'll use UID to check logic below
+        createdAt: serverTimestamp()
       });
       setNewMsg('');
     } catch (err) {
@@ -96,7 +105,6 @@ export default function CommunityChat() {
         {/* Real-time Messages Area */}
         <div className="flex-grow-1 p-4 overflow-y-auto d-flex flex-column gap-3 no-scrollbar">
           {messages.map((msg) => {
-            // Check if the message was sent by the current logged-in user
             const isMe = msg.uid === auth.currentUser?.uid;
 
             return (
@@ -119,14 +127,13 @@ export default function CommunityChat() {
               </div>
             );
           })}
-          {/* Invisible element to anchor the scroll */}
           <div ref={scrollRef} />
         </div>
 
         {/* Input Bar */}
         <div className="p-4" style={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="d-flex gap-2 mx-auto" style={{ maxWidth: '1200px' }}>
-             <input
+            <input
               className="form-control py-3 px-4 fs-5 border-0 shadow-none"
               placeholder="Type a message..."
               style={{ background: 'rgba(255, 255, 255, 0.9)', borderRadius: '15px' }}

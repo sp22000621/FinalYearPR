@@ -1,43 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import '../styles/Landing.css';
 import logo from '../assets/icons/logo.svg';
 
 export default function StudentLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
-
-  const actionCodeSettings = {
-    url: window.location.href, 
-    handleCodeInApp: true,
-  };
-
-  useEffect(() => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      setIsLoggingIn(true);
-      let savedEmail = window.localStorage.getItem('emailForSignIn');
-      
-      if (!savedEmail) {
-        savedEmail = window.prompt('Please confirm your student email:');
-      }
-
-      signInWithEmailLink(auth, savedEmail, window.location.href)
-        .then(() => {
-          window.localStorage.removeItem('emailForSignIn');
-          // No need to specify where to go—App.jsx redirector handles it
-          navigate('/student-home'); 
-        })
-        .catch((error) => {
-          console.error(error);
-          setStatusMsg("Link expired. Please try again.");
-          setIsLoggingIn(false);
-        });
-    }
-  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -45,12 +18,22 @@ export default function StudentLogin() {
     setStatusMsg('');
 
     try {
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
-      setStatusMsg("Magic link sent! Check your student inbox.");
+      // Direct Sign-in using the credentials created in the Admin Panel
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      //  App.jsx or Protected Route will handle the redirect
+      //  for immediate feedback
+      navigate('/student-home'); 
     } catch (error) {
       console.error(error);
-      setStatusMsg("Error sending link. Try again later.");
+      // Friendly error messages based on Firebase codes
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setStatusMsg("Invalid email or password.");
+      } else if (error.code === 'auth/too-many-requests') {
+        setStatusMsg("Too many failed attempts. Try again later.");
+      } else {
+        setStatusMsg("Login failed. Please try again.");
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -76,7 +59,7 @@ export default function StudentLogin() {
         )}
 
         <form onSubmit={handleLogin}>
-          <div className="mb-4 text-start">
+          <div className="mb-3 text-start">
             <label className="text-white-50 small ms-2">University Email</label>
             <input 
               type="email" 
@@ -84,6 +67,18 @@ export default function StudentLogin() {
               placeholder="id-number@student.biust.ac.bw"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-4 text-start">
+            <label className="text-white-50 small ms-2">Password</label>
+            <input 
+              type="password" 
+              className="form-control bg-transparent text-white border-secondary shadow-none" 
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
@@ -98,14 +93,22 @@ export default function StudentLogin() {
               transition: 'all 0.3s'
             }}
           >
-            {isLoggingIn ? 'SENDING...' : 'GET MAGIC LINK'}
+            {isLoggingIn ? 'SIGNING IN...' : 'LOGIN'}
           </button>
 
           <div className="mt-4">
-            <p className="text-white-50 small" style={{ lineHeight: '1.4' }}>
-              One link for all access levels.<br/>
-              Check your inbox to continue.
-            </p>
+            <style>{`.forgot-link:hover { color: orange !important; transition: 0.3s; }`}</style>
+            <a 
+              href="#" 
+              className="forgot-link text-white-50 small text-decoration-none"
+              onClick={(e) => {
+                e.preventDefault();
+                // Add password reset logic here later
+                alert("Password reset feature coming soon.");
+              }}
+            >
+              Forgot Password?
+            </a>
           </div>
         </form>
       </div>

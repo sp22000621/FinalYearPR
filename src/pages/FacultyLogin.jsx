@@ -1,58 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import logo from '../assets/icons/logo.svg';
 import wallpaper from '../assets/images/wallpaper.png'; 
 
 export default function FacultyLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState(''); // password state
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
 
-  // CONFIG: Magic Link settings
-  const actionCodeSettings = {
-    url: window.location.href, // Returns user back to this exact page
-    handleCodeInApp: true,
-  };
-
-  // EFFECT: Catch the user when they click the link in their email
-  useEffect(() => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      setIsLoggingIn(true);
-      let savedEmail = window.localStorage.getItem('emailForSignIn');
-      
-      // If user opened link on a different device/browser, ask for email
-      if (!savedEmail) {
-        savedEmail = window.prompt('Please provide your BIUST email for confirmation');
-      }
-
-      signInWithEmailLink(auth, savedEmail, window.location.href)
-        .then(() => {
-          window.localStorage.removeItem('emailForSignIn');
-          navigate('/dashboard-redirector'); // App.jsx handle the role routing
-        })
-        .catch((error) => {
-          console.error(error);
-          setStatusMsg("Link expired or invalid. Please request a new one.");
-          setIsLoggingIn(false);
-        });
-    }
-  }, [navigate]);
-
-  const handleMagicLinkRequest = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoggingIn(true);
     setStatusMsg('');
 
     try {
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
-      setStatusMsg("Success! Check your email for the login link.");
+      // Direct sign-in using credentials created in Admin Panel
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      // Navigate to the Faculty side of the app
+      navigate('/dashboard-redirector'); 
     } catch (error) {
       console.error(error);
-      setStatusMsg("Failed to send link. Check your connection.");
+      // Specific feedback for faculty users
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setStatusMsg("Invalid staff credentials.");
+      } else {
+        setStatusMsg("Login failed. Please check your connection.");
+      }
     } finally {
       setIsLoggingIn(false);
     }
@@ -92,17 +70,17 @@ export default function FacultyLogin() {
         </div>
         
         <h2 className="text-white fw-bold h4 mb-1">Faculty Sign In</h2>
-        <p className="text-white-50 small mb-4">Passwordless Management Access</p>
+        <p className="text-white-50 small mb-4">Management Access Portal</p>
 
         {statusMsg && (
-          <div className="mb-3 small p-2 rounded" style={{ background: 'rgba(255,255,255,0.1)', color: '#3d7a77', border: '1px solid #3d7a77' }}>
+          <div className="mb-3 small p-2 rounded" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
             {statusMsg}
           </div>
         )}
 
-        <form onSubmit={handleMagicLinkRequest}>
-          <div className="mb-4 text-start">
-            <label className="text-white-50 small ms-2 mb-1 d-block">BIUST Email</label>
+        <form onSubmit={handleLogin}>
+          <div className="mb-3 text-start">
+            <label className="text-white-50 small ms-2 mb-1 d-block">BIUST Staff Email</label>
             <input 
               type="email" 
               className="form-control bg-transparent text-white border-secondary shadow-none" 
@@ -110,6 +88,19 @@ export default function FacultyLogin() {
               style={{ borderRadius: '12px' }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-4 text-start">
+            <label className="text-white-50 small ms-2 mb-1 d-block">Password</label>
+            <input 
+              type="password" 
+              className="form-control bg-transparent text-white border-secondary shadow-none" 
+              placeholder="••••••••" 
+              style={{ borderRadius: '12px' }}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
@@ -124,12 +115,12 @@ export default function FacultyLogin() {
               transition: 'all 0.3s'
             }}
           >
-            {isLoggingIn ? 'SENDING LINK...' : 'SEND MAGIC LINK'}
+            {isLoggingIn ? 'VERIFYING...' : 'LOGIN'}
           </button>
           
           <div className="mt-2">
             <p className="text-white-50 small">
-              We'll email you a secure link to sign in instantly.
+              Secure access for authorized BIUST faculty only.
             </p>
           </div>
         </form>
@@ -138,7 +129,7 @@ export default function FacultyLogin() {
       <style>{`
         .btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); background-color: #3d7a77 !important; }
         input::placeholder { color: rgba(255,255,255,0.3) !important; font-size: 0.9rem; }
-        input:focus { border-color: #3d7a77 !important; outline: none; }
+        input:focus { border-color: #3d7a77 !important; outline: none; background-color: rgba(255,255,255,0.05) !important; color: white !important; }
       `}</style>
     </div>
   );
