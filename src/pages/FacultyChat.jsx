@@ -1,39 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { db, auth } from '../firebase';
+import { collection, query, where, onSnapshot, addDoc, orderBy, serverTimestamp } from 'firebase/firestore';
 import FacultyLayout from '../components/FacultyLayout';
 
-const memberNames = {
-  dave: { name: 'Dave', role: 'Plumbing Specialist' },
-  lumbiel: { name: 'Lumbiel', role: 'General Maintenance' },
-  'mr-peo': { name: 'Mr Peo', role: 'Electrical Technician' },
-  thato: { name: 'Thato', role: 'HVAC Technician' },
+const memberData = {
+  'hxhtakeover@biust.ac.bw': { name: 'Meruem Hunter', role: 'Field Operative' },
+  'swarthyn10@gmail.com': { name: 'John Wick', role: 'Senior Maintenance Director' },
 };
-
-const initialMessages = [
-  { id: 1, sender: 'Dave', text: 'Did you check for clogs on all floors? Just to avoid more reports.', time: '10:30 AM', isMe: false },
-  { id: 2, sender: 'You', text: 'Yes, sir. I checked the ground and first floors as well. The main line is clear, it was just an isolated issue in the second-floor kitchen.', time: '10:45 AM', isMe: true },
-];
 
 export default function FacultyChat() {
   const { memberId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const reportId = searchParams.get('report');
-
-  const member = memberNames[memberId || ''] || { name: 'Team Member', role: 'Maintenance' };
-  const [messages, setMessages] = useState(initialMessages);
+  const scrollRef = useRef(null);
+  
+  const [replyContext, setReplyContext] = useState(searchParams.get('report'));
+  const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState('');
+  const currentUser = auth.currentUser;
 
-  const sendMessage = () => {
-    if (!newMsg.trim()) return;
-    setMessages([...messages, {
-      id: messages.length + 1,
-      sender: 'You',
+  const member = memberData[memberId] || { 
+    name: memberId?.split('@')[0].toUpperCase() || 'Team Member', 
+    role: 'Maintenance Team' 
+  };
+
+  // Auto-scroll logic
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  // INSTANT LISTENER (Same logic as your homepage/scan)
+  useEffect(() => {
+    if (!memberId || !currentUser?.email) return;
+
+    // Simplified query to prevent index-failure delays
+    const q = query(
+      collection(db, "chats"),
+      where("participants", "array-contains", currentUser.email),
+      orderBy("createdAt", "asc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        // Local filter ensures it's specifically with this member
+        .filter(m => m.participants.includes(memberId));
+      
+      setMessages(msgs);
+    }, (err) => {
+      console.error("FIREBASE ERROR: Check console for index link!", err);
+    });
+
+    return () => unsubscribe();
+  }, [memberId, currentUser?.email]);
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !currentUser?.email) return;
+
+    const messageData = {
       text: newMsg,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMe: true,
-    }]);
-    setNewMsg('');
+      sender: currentUser.email,
+      participants: [currentUser.email, memberId],
+      createdAt: serverTimestamp(),
+    };
+
+    if (replyContext) {
+      messageData.quotedReport = replyContext;
+    }
+
+    try {
+      // Clear input and context immediately for that snappy feel
+      setNewMsg('');
+      setReplyContext(null); 
+      
+      await addDoc(collection(db, "chats"), messageData);
+    } catch (err) {
+      console.error("Error sending:", err);
+    }
   };
 
   return (
@@ -42,90 +88,100 @@ export default function FacultyChat() {
         
         {/* Header */}
         <div className="d-flex align-items-center gap-3 p-3 shadow-sm" 
-             style={{ background: 'rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+             style={{ background: 'rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)' }}>
           <button onClick={() => navigate(-1)} className="btn border-0 p-0 text-white opacity-75">
             <span className="material-symbols-rounded">arrow_back</span>
           </button>
           
           <img 
             src={`https://ui-avatars.com/api/?name=${member.name}&background=3d7a77&color=fff&size=40`} 
-            className="rounded-circle shadow-sm" 
-            width={40} 
-            alt={member.name} 
+            className="rounded-circle shadow-sm" width={40} alt={member.name} 
           />
           
           <div className="flex-grow-1">
             <h6 className="fw-bold mb-0 text-white">{member.name}</h6>
-            <small className="opacity-50" style={{ fontSize: '11px', color: 'white' }}>{member.role}</small>
+            <small className="opacity-50 text-white" style={{ fontSize: '11px' }}>{member.role}</small>
           </div>
-
-          <button className="btn border-0 p-0 text-white opacity-50">
-            <span className="material-symbols-rounded">more_vert</span>
-          </button>
         </div>
 
         {/* Messages Area */}
-        <div className="flex-grow-1 p-4 overflow-auto no-scrollbar" style={{ height: 'calc(100vh - 160px)' }}>
-          <div className="text-center mb-4">
-            <span className="badge rounded-pill px-3 py-1 fw-normal" style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)', fontSize: '10px' }}>
-              TODAY
-            </span>
-          </div>
-
-          {reportId && (
-            <div className="rounded-3 p-3 mb-4 mx-auto shadow-sm" 
-                 style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', maxWidth: '90%' }}>
-              <p className="small fw-bold mb-1" style={{ color: '#3d7a77' }}>REFERENCE: #{reportId}</p>
-              <p className="small mb-0 text-white opacity-50">You are discussing this specific maintenance request.</p>
-            </div>
-          )}
-
+        <div 
+          className="flex-grow-1 p-4 overflow-auto no-scrollbar" 
+          style={{ height: 'calc(100vh - 180px)' }}
+          ref={scrollRef}
+        >
           <div className="d-flex flex-column gap-3">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`d-flex ${msg.isMe ? 'justify-content-end' : 'justify-content-start'}`}>
-                <div className={`px-3 py-2 rounded-4 shadow-sm ${msg.isMe ? 'rounded-bottom-end-0' : 'rounded-bottom-start-0'}`} 
-                     style={{ 
-                       maxWidth: '80%', 
-                       background: msg.isMe ? '#3d7a77' : 'rgba(255,255,255,0.15)',
-                       backdropFilter: 'blur(10px)',
-                       color: 'white',
-                       border: msg.isMe ? 'none' : '1px solid rgba(255,255,255,0.1)'
-                     }}>
-                  <p className="mb-1" style={{ fontSize: '14px', lineHeight: '1.4' }}>{msg.text}</p>
-                  <div className="text-end" style={{ fontSize: '10px', opacity: 0.6 }}>{msg.time}</div>
+            {messages.map((msg) => {
+              const isMe = msg.sender === currentUser?.email;
+              return (
+                <div key={msg.id} className={`d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'}`}>
+                  <div className={`px-3 py-2 rounded-4 shadow-sm ${isMe ? 'rounded-bottom-end-0' : 'rounded-bottom-start-0'}`} 
+                       style={{ 
+                         maxWidth: '80%', 
+                         background: isMe ? '#3d7a77' : 'rgba(255,255,255,0.12)',
+                         color: 'white',
+                         border: '1px solid rgba(255,255,255,0.1)',
+                         backdropFilter: 'blur(10px)'
+                       }}>
+                    
+                    {msg.quotedReport && (
+                       <div className="mb-2 p-2 rounded-2" 
+                            style={{ 
+                              background: 'rgba(0,0,0,0.2)', 
+                              borderLeft: `3px solid ${isMe ? '#4fd1c5' : '#3d7a77'}`, 
+                              fontSize: '11px' 
+                            }}>
+                         <div className="fw-bold" style={{ color: isMe ? '#4fd1c5' : '#81e6d9' }}>Replying to Report</div>
+                         <div className="opacity-75 text-truncate">#{msg.quotedReport}</div>
+                       </div>
+                    )}
+
+                    <p className="mb-1" style={{ fontSize: '14px', lineHeight: '1.5' }}>{msg.text}</p>
+                    <div className="text-end" style={{ fontSize: '10px', opacity: 0.5 }}>
+                       {msg.createdAt?.toDate() 
+                         ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                         : '...'}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         {/* Input Bar */}
-        <div className="p-3" style={{ background: 'rgba(255,255,255,0.03)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="d-flex align-items-center gap-2 bg-white rounded-pill px-3 py-2 shadow-lg">
-            <button className="btn border-0 p-0 text-muted" type="button">
-              <span className="material-symbols-rounded">mood</span>
-            </button>
+        <div className="p-3">
+          <div className="bg-white rounded-4 shadow-lg p-2 overflow-hidden">
             
-            <input 
-              className="form-control border-0 bg-transparent shadow-none px-2" 
-              placeholder="Write something..." 
-              style={{ fontSize: '14px' }}
-              value={newMsg} 
-              onChange={(e) => setNewMsg(e.target.value)} 
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
-            />
+            {replyContext && (
+              <div className="px-3 py-2 mb-2 rounded-3 d-flex align-items-center justify-content-between animate__animated animate__fadeInUp" 
+                   style={{ background: '#f1f3f5', borderLeft: '4px solid #3d7a77' }}>
+                <div className="d-flex flex-column">
+                  <span className="fw-bold" style={{ fontSize: '11px', color: '#3d7a77' }}>Responding about</span>
+                  <span className="text-muted text-truncate" style={{ fontSize: '12px', maxWidth: '250px' }}>#{replyContext}</span>
+                </div>
+                <button className="btn btn-sm p-0 text-muted" onClick={() => setReplyContext(null)}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>close</span>
+                </button>
+              </div>
+            )}
 
-            <button className="btn border-0 p-0 text-muted mx-1" type="button">
-              <span className="material-symbols-rounded">attach_file</span>
-            </button>
-
-            <button 
-              onClick={sendMessage} 
-              className="btn rounded-circle d-flex align-items-center justify-content-center p-0" 
-              style={{ background: '#3d7a77', width: '38px', height: '38px', color: 'white' }}
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>send</span>
-            </button>
+            <div className="d-flex align-items-center gap-2 px-2 pb-1">
+              <input 
+                className="form-control border-0 bg-transparent shadow-none" 
+                placeholder="Write a message..." 
+                value={newMsg} 
+                onChange={(e) => setNewMsg(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && sendMessage()} 
+              />
+              <button 
+                onClick={sendMessage} 
+                className="btn rounded-circle d-flex align-items-center justify-content-center" 
+                style={{ background: '#3d7a77', width: '38px', height: '38px', color: 'white' }}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>send</span>
+              </button>
+            </div>
           </div>
         </div>
 
