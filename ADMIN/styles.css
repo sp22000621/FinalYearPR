@@ -1,0 +1,67 @@
+body {
+  font-family: "Segoe UI", sans-serif;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+h2, h3 {
+  margin-top: 20px;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+input,
+select,
+button {
+  padding: 8px;
+  margin: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+input,
+select,
+button {
+  width: 200px;
+}
+
+button[type="submit"] {
+  background: #007bff;
+  color: white;
+  border: none;
+}
+
+button[type="submit"]:hover {
+  background: #0056b3;
+}
+
+button.btn-delete {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.table th {
+  background: #f4f4f4;
+  font-weight: 600;
+}

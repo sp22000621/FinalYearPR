@@ -1,0 +1,140 @@
+# Firebase Storage Upload Test (Single HTML File)
+
+Copy this into a file like `upload-test.html` and open it in your browser.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Image Upload Test</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      width: 400px;
+      background: #1e1e1e;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    button {
+      background: #3d7a77;
+      border: none;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #ccc;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Upload Image Test</h2>
+
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="uploadImage()">Upload Image</button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCN56TY6ndgVZpJlADNaNqqG6luJZb6xx0",
+      authDomain: "student-reporting-platform.firebaseapp.com",
+      projectId: "student-reporting-platform",
+      storageBucket: "student-reporting-platform.firebasestorage.app",
+      messagingSenderId: "775304519881",
+      appId: "1:775304519881:web:4277530d1d938a5105ed18",
+      measurementId: "G-F3BD8HV3ER"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Storage Reference
+    const storage = firebase.storage();
+
+    async function uploadImage() {
+      const fileInput = document.getElementById('imageInput');
+      const status = document.getElementById('status');
+
+      if (!fileInput.files.length) {
+        status.innerHTML = 'Please select an image first.';
+        return;
+      }
+
+      const file = fileInput.files[0];
+
+      try {
+        status.innerHTML = 'Uploading...';
+
+        // Save inside folder named "testing"
+        const storageRef = storage.ref('testing/' + Date.now() + '_' + file.name);
+
+        await storageRef.put(file);
+
+        const downloadURL = await storageRef.getDownloadURL();
+
+        status.innerHTML = `Upload Successful!<br><br><a href="${downloadURL}" target="_blank" style="color:#4CAF50;">View Uploaded Image</a>`;
+      } catch (error) {
+        console.error(error);
+        status.innerHTML = 'Upload failed: ' + error.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
+```
+
+This uploads into a Firebase Storage folder called:
+
+```text
+testing/
+```
+
+If Storage is truly enabled, you should see the uploaded image appear in:
+
+Firebase Console → Storage → Files → testing folder

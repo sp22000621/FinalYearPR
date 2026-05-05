@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatFill - Community Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        :root { --primary: #3d7a77; --dark: #0f172a; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--dark); color: white; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 600px; }
+        .card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px; padding: 30px; margin-bottom: 20px; }
+        h2 { margin-top: 0; font-weight: 700; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-size: 14px; opacity: 0.8; }
+        input, textarea, select { width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        
+        /* List Styles */
+        .group-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .group-item:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+
+        /* Modal Overlay */
+        #modalOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(8px); z-index: 1000;
+        }
+        .modal {
+            background: #1a2235; width: 90%; max-width: 400px;
+            border-radius: 28px; padding: 30px; position: relative;
+            border: 1px solid var(--border); box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; opacity: 0.5; }
+        .close-btn:hover { opacity: 1; }
+        
+        .chat-preview {
+            background: rgba(255,255,255,0.03); border-radius: 18px;
+            padding: 15px; margin-top: 20px; border-left: 4px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card">
+            <h2>Create Community</h2>
+            <form id="groupForm">
+                <div class="form-group">
+                    <label>Group Name</label>
+                    <input type="text" id="groupName" placeholder="e.g. MATH 101" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="Cores">Cores</option>
+                        <option value="Sciences">Sciences</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Official">Official</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="description" rows="2" placeholder="Tell students what this is for..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>First Welcome Message (as Admin)</label>
+                    <textarea id="firstMsg" rows="3" placeholder="Hello everyone! Welcome to..." required></textarea>
+                </div>
+                <button type="submit" id="submitBtn">Create & Send First Text</button>
+            </form>
+        </div>
+
+        <h3>Existing Groups</h3>
+        <div id="groupList"></div>
+    </div>
+
+    <!-- The Modal Pop-up -->
+    <div id="modalOverlay">
+        <div class="modal">
+            <span class="material-symbols-rounded close-btn" onclick="closeModal()">close</span>
+            <div id="modalTag" style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); margin-bottom: 5px;">Category</div>
+            <h3 id="modalTitle" style="margin: 0 0 10px 0;">Group Name</h3>
+            <p id="modalDesc" style="font-size: 13px; opacity: 0.6; line-height: 1.4;"></p>
+            
+            <div class="chat-preview">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <span class="material-symbols-rounded" style="font-size: 18px; color: var(--primary);">verified_user</span>
+                    <b style="font-size: 12px;">Admin</b>
+                </div>
+                <div id="modalMsg" style="font-size: 14px; line-height: 1.5; color: #e2e8f0;">Loading message...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase V8 Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCN56TY6ndgVZpJlADNaNqqG6luJZb6xx0",
+            authDomain: "student-reporting-platform.firebaseapp.com",
+            projectId: "student-reporting-platform",
+            storageBucket: "student-reporting-platform.firebasestorage.app",
+            messagingSenderId: "775304519881",
+            appId: "1:775304519881:web:4277530d1d938a5105ed18"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const groupForm = document.getElementById('groupForm');
+        const groupListDiv = document.getElementById('groupList');
+
+        // CREATE LOGIC
+        groupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "Processing...";
+            
+            const name = document.getElementById('groupName').value.trim();
+            const category = document.getElementById('category').value;
+            const desc = document.getElementById('description').value.trim();
+            const msg = document.getElementById('firstMsg').value.trim();
+            const groupId = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+            try {
+                await db.collection("communities").doc(groupId).set({
+                    name: name,
+                    category: category,
+                    description: desc,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await db.collection("communities").doc(groupId).collection("messages").add({
+                    text: msg,
+                    senderDisplay: "Admin",
+                    role: "System",
+                    uid: "admin-system",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                alert("Group Created Successfully!");
+                groupForm.reset();
+            } catch (error) {
+                alert("Error: " + error.message);
+            } finally {
+                submitBtn.innerText = "Create & Send First Text";
+            }
+        });
+
+        // LIVE LISTENER
+        db.collection("communities").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+            groupListDiv.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.className = 'group-item';
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600;">${data.name}</div>
+                        <div style="font-size: 12px; opacity: 0.5;">${data.category}</div>
+                    </div>
+                    <span class="material-symbols-rounded" style="color: var(--primary);">chat_bubble</span>
+                `;
+                div.onclick = () => openModal(data, doc.id);
+                groupListDiv.appendChild(div);
+            });
+        });
+
+        // POPUP FUNCTIONS
+        window.openModal = async (data, id) => {
+            document.getElementById('modalTitle').innerText = data.name;
+            document.getElementById('modalTag').innerText = data.category;
+            document.getElementById('modalDesc').innerText = data.description;
+            document.getElementById('modalMsg').innerText = "Fetching welcome message...";
+            document.getElementById('modalOverlay').style.display = 'flex';
+
+            try {
+                // Get the first message from the sub-collection
+                const msgSnap = await db.collection("communities").doc(id)
+                                        .collection("messages")
+                                        .orderBy("createdAt", "asc")
+                                        .limit(1)
+                                        .get();
+                
+                if (!msgSnap.empty) {
+                    document.getElementById('modalMsg').innerText = msgSnap.docs[0].data().text;
+                } else {
+                    document.getElementById('modalMsg').innerText = "No welcome message found.";
+                }
+            } catch (err) {
+                document.getElementById('modalMsg').innerText = "Error loading message.";
+            }
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modalOverlay').style.display = 'none';
+        };
+
+        // Close on background click
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if(e.target.id === 'modalOverlay') closeModal();
+        });
+    </script>
+</body>
+</html>
