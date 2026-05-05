@@ -103,7 +103,7 @@ export default function StudentLogin() {
               className="forgot-link text-white-50 small text-decoration-none"
               onClick={(e) => {
                 e.preventDefault();
-                // Add password reset logic here later
+                // willAdd password reset logic here later
                 alert("Password reset feature coming soon.");
               }}
             >

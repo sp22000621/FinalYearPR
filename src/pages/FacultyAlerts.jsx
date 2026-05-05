@@ -43,7 +43,7 @@ export default function FacultyAlerts() {
           });
         }
 
-        // 2. Show reports specifically ASSIGNED to John (You)
+        // 2. Show reports specifically ASSIGNED to (ME)
         else if (data.assignedTo === userEmail) {
           combinedData.push({ 
             ...data, 

@@ -20,7 +20,7 @@ export default function FacultyProfile() {
       }
 
       try {
-        // Fetching from the 'faculty' collection as identified in your DB screenshot
+        // Fetching from the 'faculty' collection in DB using the user's UID
         const docRef = doc(db, "faculty", user.uid);
         const docSnap = await getDoc(docRef);
 

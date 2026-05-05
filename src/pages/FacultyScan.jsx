@@ -95,7 +95,7 @@ export default function FacultyScan() {
             const isExpanded = expandedReports[report.id];
             
             // Logic to check if text is long enough to need "See more"
-            // Using a rough character count (approx 180 chars for 3 lines on mobile/tablet)
+            // Using a rough character count (180 chars for 3 lines on mobile/tablet)
             const isLongReport = report.description?.length > 180;
 
             return (

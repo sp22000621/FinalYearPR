@@ -5,7 +5,7 @@ const navItems = [
   { label: 'Issues', icon: 'description', path: '/faculty-home' },
   { label: 'Scan', icon: 'document_scanner', path: '/faculty-scan' }, 
   { label: 'Teams', icon: 'groups', path: '/faculty-teams' },
-  { label: 'Performance', icon: 'leaderboard', path: '/faculty-performance' }, // Missing in your current mobile view
+  { label: 'Performance', icon: 'leaderboard', path: '/faculty-performance' }, 
   { label: 'Alerts', icon: 'notifications', path: '/faculty-alerts' },
   { label: 'Profile', icon: 'account_circle', path: '/faculty-profile' },
 ];

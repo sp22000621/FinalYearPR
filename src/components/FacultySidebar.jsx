@@ -47,7 +47,7 @@ export default function FacultySidebar() {
       position: 'sticky',
       top: 0
     }}>
-      {/* ... Style Tag stays the same ... */}
+     
       
       <div className="p-4 text-center">
         <img src={logo} width={40} alt="logo" className="rounded-lg mx-auto" />  
@@ -58,7 +58,7 @@ export default function FacultySidebar() {
           const isActive = location.pathname === item.path;
           return (
             <div
-              key={item.label} // Changed key to label since path might change
+              key={item.label} // since path might change
               className={`nav-link-custom ${isActive ? 'active' : ''}`}
               onClick={() => navigate(item.path)}
             >
