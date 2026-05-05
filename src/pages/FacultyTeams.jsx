@@ -11,10 +11,15 @@ export default function FacultyTeams() {
   const [loading, setLoading] = useState(true);
   const currentUser = auth.currentUser;
 
+  // Helper function to force "..." after a specific length
+  const truncateText = (text, maxLength) => {
+    if (!text) return "";
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+  };
+
   useEffect(() => {
     if (!currentUser?.email) return;
 
-    // 1. First, get EVERYONE from the faculty collection
     const syncTeams = async () => {
       try {
         const facultySnap = await getDocs(collection(db, "faculty"));
@@ -22,7 +27,6 @@ export default function FacultyTeams() {
         
         facultySnap.forEach((doc) => {
           const data = doc.data();
-          // FILTER: Don't show yourself in the list
           if (data.email !== currentUser.email) {
             allFaculty.push({
               email: data.email,
@@ -31,12 +35,11 @@ export default function FacultyTeams() {
               lastMsg: 'No messages yet',
               time: '',
               unread: 0,
-              timestamp: 0 // for sorting
+              timestamp: 0 
             });
           }
         });
 
-        // 2. Now listen to chats to overlay the "latest message" and "unread" data
         const chatQuery = query(
           collection(db, "chats"),
           where("participants", "array-contains", currentUser.email),
@@ -46,10 +49,9 @@ export default function FacultyTeams() {
         const unsubscribe = onSnapshot(chatQuery, (chatSnap) => {
           const messages = chatSnap.docs.map(d => ({ id: d.id, ...d.data() }));
           
-          // Map chat data to our faculty list
           const updatedList = allFaculty.map(member => {
             const memberMessages = messages.filter(m => m.participants.includes(member.email));
-            const latest = memberMessages[0]; // Already sorted by desc
+            const latest = memberMessages[0]; 
             const unreadCount = memberMessages.filter(m => m.sender !== currentUser.email && !m.read).length;
 
             return {
@@ -61,9 +63,7 @@ export default function FacultyTeams() {
             };
           });
 
-          // Sort so people you just talked to are at the top
           updatedList.sort((a, b) => b.timestamp - a.timestamp);
-          
           setTeamList(updatedList);
           setLoading(false);
         });
@@ -116,44 +116,42 @@ export default function FacultyTeams() {
                 background: 'rgba(255,255,255,0.07)', 
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '20px',
-                transition: '0.3s'
+                transition: '0.3s',
+                overflow: 'hidden' // Added to wrap child constraints
               }}
               onClick={() => navigate(`/faculty-teams/chat/${member.email}`)}
-              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
             >
-              <img 
-                src={`https://ui-avatars.com/api/?name=${member.displayName}&background=3d7a77&color=fff&size=48`} 
-                className="rounded-circle shadow-sm" 
-                width={48} height={48} alt={member.displayName} 
-              />
+              <div className="rounded-circle bg-info d-flex align-items-center justify-content-center text-dark fw-bold" 
+                   style={{ width: '48px', height: '48px', minWidth: '48px' }}>
+                {member.displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2)}
+              </div>
               
               <div className="flex-grow-1 min-w-0">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h6 className="fw-bold mb-0 text-white" style={{ fontSize: '15px' }}>{member.displayName}</h6>
-                  <small className="opacity-50 text-white" style={{ fontSize: '11px' }}>{member.time}</small>
+                  <h6 className="fw-bold mb-0 text-white" style={{ fontSize: '15px' }}>
+                    {member.displayName}
+                  </h6>
+                  <small className="opacity-50 text-white ms-2" style={{ fontSize: '11px', whiteSpace: 'nowrap' }}>
+                    {member.time}
+                  </small>
                 </div>
-                <p className="mb-0 opacity-50 text-white" style={{ fontSize: '12px' }}>{member.department}</p>
-                <p className="mb-0 text-white text-truncate opacity-75 mt-1" style={{ fontSize: '13px' }}>
-                  {member.lastMsg}
+                <p className="mb-0 opacity-50 text-white" style={{ fontSize: '12px' }}>
+                   {member.department}
+                </p>
+                {/* Manual Truncation Applied Here */}
+                <p className="mb-0 text-white opacity-75 mt-1" style={{ fontSize: '13px' }}>
+                  {truncateText(member.lastMsg, 60)}
                 </p>
               </div>
 
               {member.unread > 0 && (
-                <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm" 
-                     style={{ background: '#3d7a77', color: 'white', fontSize: '10px', width: '22px', height: '22px' }}>
+                <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold ms-2" 
+                     style={{ background: '#3d7a77', color: 'white', fontSize: '10px', width: '22px', height: '22px', minWidth: '22px' }}>
                   {member.unread}
                 </div>
               )}
             </div>
           ))}
-
-          {!loading && filtered.length === 0 && (
-            <div className="text-center py-5 opacity-50 text-white">
-              <span className="material-symbols-rounded display-4 mb-2">person_search</span>
-              <p>No team members found.</p>
-            </div>
-          )}
         </div>
       </div>
     </FacultyLayout>
