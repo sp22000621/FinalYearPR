@@ -1,185 +1,211 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase';
-import { collection, query, onSnapshot, doc, getDoc, where, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, orderBy } from 'firebase/firestore';
 import FacultyLayout from '../components/FacultyLayout';
+import '../styles/Dashboard.css';
 
 export default function SeniorFacultyHome() {
   const navigate = useNavigate();
-  const [userProfile, setUserProfile] = useState({ name: 'Loading...', role: 'Senior Faculty' });
-  const [stats, setStats] = useState({ newReceived: 0, assigned: 0, resolvedToday: 0, escalated: 0 });
-  const [teamWorkload, setTeamWorkload] = useState([]);
-  const [pendingAssignments, setPendingAssignments] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [allReports, setAllReports] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setUserProfile({ name: `${data.firstName} ${data.lastName}`, role: data.role });
-        }
-      }
-    };
-    fetchProfile();
+    const user = auth.currentUser;
+    if (!user) { navigate('/'); return; }
 
-    const qReports = collection(db, "reports");
-    const unsubscribeReports = onSnapshot(qReports, (snapshot) => {
-      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      setStats({
-        newReceived: docs.filter(d => d.status === 'Open').length,
-        assigned: docs.filter(d => d.status === 'In Progress').length,
-        resolvedToday: docs.filter(d => d.status === 'Resolved').length,
-        escalated: docs.filter(d => d.isEscalated === true).length
-      });
-
-      setPendingAssignments(docs.filter(d => d.status === 'Open'));
+    // Fetch Senior Profile from faculty collection
+    getDoc(doc(db, "faculty", user.uid)).then(s => {
+      if (s.exists()) setUserData(s.data());
     });
 
-    // Fetches all Faculty members to populate the assignment list
-    const qTeam = query(collection(db, "users"), where("role", "in", ["Junior Faculty", "Senior Faculty"]));
-    const unsubscribeTeam = onSnapshot(qTeam, (snapshot) => {
-      const team = snapshot.docs.map(d => ({
-        name: d.data().firstName + " " + d.data().lastName,
-        email: d.data().email, // Use email as the link for assignedTo
-        role: d.data().role,
-        id: d.id
-      }));
-      setTeamWorkload(team);
+    // Global Reports Listener
+    const qReports = query(collection(db, "reports"), orderBy("createdAt", "desc"));
+    const unsubReports = onSnapshot(qReports, (snapshot) => {
+      setAllReports(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
     });
 
-    return () => { unsubscribeReports(); unsubscribeTeam(); };
-  }, []);
+    // Underlings Listener
+    const qTeam = query(collection(db, "faculty"), where("isSRC", "==", false));
+    const unsubTeam = onSnapshot(qTeam, (snapshot) => {
+      setTeamMembers(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
 
-  const handleQuickAssign = async (reportId, workerEmail) => {
-    if (!workerEmail) return;
+    return () => { unsubReports(); unsubTeam(); };
+  }, [navigate]);
+
+  const handleAction = async (reportId, facultyEmail, isSelf = false) => {
+    const targetEmail = isSelf ? auth.currentUser.email : facultyEmail;
+    if (!targetEmail) return;
+
     try {
       await updateDoc(doc(db, "reports", reportId), {
         status: 'In Progress',
-        assignedTo: workerEmail,
+        assignedTo: targetEmail,
         assignedAt: new Date(),
         managedBy: auth.currentUser.email
       });
+      setSuccessMsg(isSelf ? "Report claimed!" : "Assigned successfully!");
+      setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      console.error("Assignment error:", err);
-      alert("Failed to assign task.");
+      console.error("Update failed:", err);
     }
+  };
+
+  // Logic for filtered sections
+  const freshUnassigned = allReports.filter(r => r.status === 'Open');
+  
+  const stats = {
+    new: freshUnassigned.length,
+    active: allReports.filter(r => r.status === 'In Progress').length,
+    done: allReports.filter(r => r.status === 'Resolved').length
+  };
+
+  // Filter Team by Name or Assigned Number
+  const filteredTeam = teamMembers.map(m => ({
+    ...m,
+    pending: allReports.filter(r => r.assignedTo === m.email && r.status === 'In Progress').length
+  })).filter(m => {
+    const search = searchTerm.toLowerCase().trim();
+    if (!search) return true;
+    
+    // Check if search is a number matching the task count
+    const isNumberSearch = !isNaN(search) && search !== "";
+    if (isNumberSearch) return m.pending.toString() === search;
+
+    // Otherwise check names
+    return m.firstName?.toLowerCase().includes(search) || m.lastName?.toLowerCase().includes(search);
+  });
+
+  const glassStyle = {
+    background: 'rgba(255, 255, 255, 0.05)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '1.5rem',
+    padding: '1.5rem'
   };
 
   return (
     <FacultyLayout>
-      <div className="no-scrollbar" style={{ height: '100vh', overflowY: 'auto', paddingBottom: '100px' }}>
+      <div className="main-content no-scrollbar" style={{ height: '100vh', overflowY: 'auto', padding: '20px' }}>
         
-        {/* Modern Header */}
-        <div className="p-4 bg-white shadow-sm border-bottom sticky-top" style={{ zIndex: 1020 }}>
-          <div className="container-fluid d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center gap-3">
-              <img 
-                src={`https://ui-avatars.com/api/?name=${userProfile.name}&background=3d7a77&color=fff&size=50`} 
-                className="rounded-circle border border-2 border-white shadow-sm" 
-                width={50} 
-                alt="profile" 
+        {successMsg && (
+          <div className="position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg" 
+               style={{ zIndex: 1050, background: '#10b981', color: 'white', padding: '10px 20px', borderRadius: '50px', fontWeight: 'bold' }}>
+            {successMsg}
+          </div>
+        )}
+
+        <header className="d-flex justify-content-between align-items-center mb-4">
+          <div className="d-flex align-items-center gap-3">
+            <div className="rounded-circle bg-info d-flex align-items-center justify-content-center text-dark fw-bold" style={{ width: '50px', height: '50px' }}>
+              {userData?.firstName?.charAt(0)}{userData?.lastName?.charAt(0)}
+            </div>
+            <div className="text-white">
+              <h5 className="mb-0 fw-bold">{userData ? `${userData.firstName} ${userData.lastName}` : "Loading..."}</h5>
+              <small className="opacity-75 text-info">{userData?.rank || "Senior Faculty"}</small>
+            </div>
+          </div>
+        </header>
+
+        {/* New / Active / Done Stats */}
+        <div className="row g-3 mb-5">
+          <div className="col-4">
+            <div className="bg-white rounded-4 p-4 text-center">
+              <h2 className="fw-bold mb-0 text-danger">{stats.new}</h2>
+              <small className="text-muted fw-bold">NEW</small>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="bg-white rounded-4 p-4 text-center">
+              <h2 className="fw-bold mb-0 text-primary">{stats.active}</h2>
+              <small className="text-muted fw-bold">ACTIVE</small>
+            </div>
+          </div>
+          <div className="col-4">
+            <div className="bg-white rounded-4 p-4 text-center">
+              <h2 className="fw-bold mb-0 text-success">{stats.done}</h2>
+              <small className="text-muted fw-bold">DONE</small>
+            </div>
+          </div>
+        </div>
+
+        {/* Unassigned Reports Section */}
+        <div className="mb-5">
+          <h6 className="text-white fw-bold mb-3">Live Reports Queue</h6>
+          <div className="row g-4">
+            {freshUnassigned.map((item) => (
+              <div key={item.id} className="col-12 col-lg-6">
+                <div style={glassStyle}>
+                  <div className="d-flex justify-content-between mb-2">
+                    <span className="text-white opacity-25 small">#{item.id.slice(0, 6).toUpperCase()}</span>
+                    <span className="badge bg-danger rounded-pill px-3">Open</span>
+                  </div>
+                  <h5 className="fw-bold text-white mb-1">{item.category || item.issue}</h5>
+                  <p className="text-info small mb-3">📍 {item.location}</p>
+                  <p className="text-white-50 small mb-4" style={{ minHeight: '50px' }}>{item.description}</p>
+                  
+                  <div className="d-flex gap-2">
+                    <button 
+                      className="btn btn-sm btn-outline-light px-3 fw-bold"
+                      onClick={() => handleAction(item.id, null, true)}
+                    >Take</button>
+                    <select 
+                      className="form-select form-select-sm bg-dark text-white border-0 flex-grow-1"
+                      style={{ background: 'rgba(0,0,0,0.5)', height: '38px' }}
+                      onChange={(e) => handleAction(item.id, e.target.value)}
+                      value=""
+                    >
+                      <option value="" disabled>Assign to Team Member...</option>
+                      {teamMembers.map(m => (
+                        <option key={m.id} value={m.email}>{m.firstName} {m.lastName}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Team Workload Monitor with Numeric Search */}
+        <div className="mt-5 pt-4 border-top border-white-10">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h6 className="text-white fw-bold m-0">Team Workload Monitor</h6>
+            <div className="d-flex gap-2 w-50">
+              <input 
+                type="text" 
+                placeholder="Search name or task count (0, 1...)" 
+                className="form-control form-control-sm bg-dark text-white border-secondary"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <div>
-                <p className="mb-0 fw-bold text-muted small text-uppercase" style={{ letterSpacing: '1px', fontSize: '10px' }}>{userProfile.role}</p>
-                <h5 className="fw-bold mb-0 text-dark">{userProfile.name}</h5>
-              </div>
+              <button 
+                className="btn btn-sm btn-secondary" 
+                onClick={() => setSearchTerm("")}
+              >Reset</button>
             </div>
-            <button className="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-2" onClick={() => auth.signOut()}>
-              <span className="material-symbols-rounded fs-6">logout</span> Logout
-            </button>
+          </div>
+          <div className="row g-3">
+            {filteredTeam.map(member => (
+              <div key={member.id} className="col-12 col-md-4">
+                <div style={{ ...glassStyle, padding: '1.5rem' }} className="text-center">
+                  <div className="text-white fw-bold">{member.firstName} {member.lastName}</div>
+                  <div className={`badge rounded-pill mt-3 px-3 py-2 ${member.pending === 0 ? 'bg-secondary opacity-50' : 'bg-primary'}`}>
+                    Assigned: {member.pending}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="container-fluid p-4 p-md-5">
-          <div className="mx-auto" style={{ maxWidth: '1400px' }}>
-            
-            {/* Stats Grid */}
-            <h6 className="fw-bold mb-4 text-white text-uppercase opacity-75" style={{ letterSpacing: '1.5px', fontSize: '12px' }}>Operational Overview</h6>
-            <div className="row g-4 mb-5">
-              <StatCard value={stats.newReceived} label="Unassigned" color="#ff4e4e" />
-              <StatCard value={stats.assigned} label="In Progress" color="#4ea1ff" />
-              <StatCard value={stats.resolvedToday} label="Resolved" color="#4ade80" />
-              <StatCard value={stats.escalated} label="Escalated" color="#f59e0b" />
-            </div>
-
-            <div className="row g-5">
-              {/* Left: Pending Reports (Higher Priority for Seniors) */}
-              <div className="col-lg-6">
-                <h6 className="fw-bold mb-4 text-white text-uppercase opacity-75" style={{ letterSpacing: '1.5px', fontSize: '12px' }}>Awaiting Assignment</h6>
-                <div className="d-flex flex-column gap-3">
-                  {pendingAssignments.length > 0 ? pendingAssignments.map((item) => (
-                    <div key={item.id} className="rounded-4 p-3 shadow-lg" 
-                         style={{ background: 'white', borderLeft: '6px solid #3d7a77' }}>
-                      <div className="d-flex justify-content-between align-items-start mb-2">
-                        <span className="badge bg-light text-dark border">{item.category}</span>
-                        <small className="text-muted">#{item.id.substring(0,6).toUpperCase()}</small>
-                      </div>
-                      <h6 className="fw-bold text-dark mb-1">{item.issue}</h6>
-                      <p className="text-muted mb-3 small">📍 {item.location}</p>
-                      
-                      <div className="pt-3 border-top">
-                        <label className="small fw-bold text-muted mb-1 d-block">Assign to Faculty:</label>
-                        <select 
-                          className="form-select form-select-sm border-0 bg-light rounded-3"
-                          onChange={(e) => handleQuickAssign(item.id, e.target.value)}
-                          defaultValue=""
-                        >
-                          <option value="" disabled>Select member...</option>
-                          {teamWorkload.map(m => (
-                            <option key={m.id} value={m.email}>{m.name} ({m.role.split(' ')[0]})</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="text-center py-5 rounded-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                      <p className="text-white-50">All reports have been assigned. Good job!</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: Team Overview */}
-              <div className="col-lg-6">
-                <h6 className="fw-bold mb-4 text-white text-uppercase opacity-75" style={{ letterSpacing: '1.5px', fontSize: '12px' }}>Live Team Status</h6>
-                <div className="d-flex flex-column gap-2">
-                  {teamWorkload.map((member) => (
-                    <div key={member.id} className="rounded-4 p-3 d-flex align-items-center justify-content-between shadow-sm" 
-                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="position-relative">
-                          <img src={`https://ui-avatars.com/api/?name=${member.name}&background=3d7a77&color=fff&size=40`} className="rounded-circle" width={40} />
-                          <span className="position-absolute bottom-0 end-0 bg-success border border-2 border-dark rounded-circle" style={{ width: '10px', height: '10px' }}></span>
-                        </div>
-                        <div>
-                          <h6 className="fw-bold text-white mb-0" style={{ fontSize: '14px' }}>{member.name}</h6>
-                          <p className="text-white-50 mb-0 small" style={{ fontSize: '11px' }}>{member.role}</p>
-                        </div>
-                      </div>
-                      <span className="small text-white-50">Online</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </FacultyLayout>
-  );
-}
-
-function StatCard({ value, label, color }) {
-  return (
-    <div className="col-6 col-md-3">
-      <div className="rounded-4 p-4 text-center shadow-lg h-100 border-0" 
-           style={{ background: 'white' }}>
-        <div className="h1 fw-bold mb-0" style={{ color: color }}>{value}</div>
-        <div className="small fw-bold text-muted text-uppercase" style={{ fontSize: '10px', letterSpacing: '1px' }}>{label}</div>
-      </div>
-    </div>
   );
 }

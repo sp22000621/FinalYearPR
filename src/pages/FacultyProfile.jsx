@@ -1,10 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth, db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import FacultyLayout from '../components/FacultyLayout';
 
 export default function FacultyProfile() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const user = auth.currentUser;
+      if (!user) {
+        navigate('/');
+        return;
+      }
+
+      try {
+        // Fetching from the 'faculty' collection as identified in your DB screenshot
+        const docRef = doc(db, "faculty", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setProfile(docSnap.data());
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/'); // Redirect to landing/login page
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  if (loading) return (
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-dark text-white">
+      <div className="spinner-border text-info" role="status"></div>
+    </div>
+  );
 
   return (
     <FacultyLayout>
@@ -14,16 +60,22 @@ export default function FacultyProfile() {
         <div className="d-flex flex-column align-items-center mb-5 pt-4">
           <div className="position-relative">
             <img 
-              src="https://ui-avatars.com/api/?name=Kagiso&background=3d7a77&color=fff&size=90" 
+              src={`https://ui-avatars.com/api/?name=${profile?.firstName}+${profile?.lastName}&background=3d7a77&color=fff&size=90`} 
               className="rounded-circle border border-2 border-opacity-25 border-white shadow-lg" 
               width={90} 
               alt="profile" 
             />
             <div className="position-absolute bottom-0 end-0 p-1 bg-success rounded-circle border border-2 border-dark" style={{ width: '15px', height: '15px' }}></div>
           </div>
-          <h4 className="fw-bold text-white mt-3 mb-0">Kagiso Moeng</h4>
-          <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.5)' }}>Maintenance Operator</p>
-          <p className="opacity-50 text-white" style={{ fontSize: '12px' }}>kagiso@biust.ac.bw</p>
+          <h4 className="fw-bold text-white mt-3 mb-0">
+            {profile?.firstName} {profile?.lastName}
+          </h4>
+          <p className="small mb-0" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            {profile?.rank || 'Faculty Member'}
+          </p>
+          <p className="opacity-50 text-white" style={{ fontSize: '12px' }}>
+            {profile?.email}
+          </p>
         </div>
 
         {/* Settings Groups */}
@@ -51,7 +103,7 @@ export default function FacultyProfile() {
 
           {/* Sign Out Button */}
           <button 
-            onClick={() => navigate('/')} 
+            onClick={handleLogout} 
             className="btn w-100 mt-5 py-3 rounded-4 fw-bold shadow-sm" 
             style={{ 
               background: 'rgba(220, 38, 38, 0.15)', 
@@ -67,7 +119,6 @@ export default function FacultyProfile() {
     </FacultyLayout>
   );
 }
-
 
 function SettingRow({ icon, label, toggle, checked, onChange, value, arrow }) {
   return (

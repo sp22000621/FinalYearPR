@@ -13,7 +13,7 @@ import StudentAlerts from './pages/StudentAlerts';
 import StudentCommunities from './pages/StudentCommunities';
 import CommunityChat from './pages/CommunityChat';
 import StudentProfile from './pages/StudentProfile';
-import SeniorFacultyHome from './pages/SeniorFacultyHome';
+import SeniorFacultyHome from './pages/SeniorFacultyHome'; 
 import FacultyScan from './pages/FacultyScan'; 
 import FacultyChat from './pages/FacultyChat';      
 import FacultyTeams from './pages/FacultyTeams';
@@ -33,21 +33,22 @@ function App() {
       setLoading(true);
       if (firebaseUser) {
         try {
-          // 1. Check students collection first
+          // 1. Check students collection
           const studentDoc = await getDoc(doc(db, "students", firebaseUser.uid));
           
           if (studentDoc.exists()) {
             const studentData = studentDoc.data();
-            // Map isSRC field to internal role state
             setRole(studentData.isSRC ? "SRC" : "Student");
           } else {
-            // 2. Check faculty collection if not in students
+            // 2. Check faculty collection
             const facultyDoc = await getDoc(doc(db, "faculty", firebaseUser.uid));
             
             if (facultyDoc.exists()) {
               const facultyData = facultyDoc.data();
-              // Map 'rank' field from Firestore (image_c56a66.jpg) to internal roles
-              if (facultyData.rank === "Senior Maintance Director") {
+              const rank = (facultyData.rank || "").toLowerCase();
+              
+              // Case-insensitive keyword check for "senior"
+              if (rank.includes("senior")) {
                 setRole("Senior Faculty");
               } else {
                 setRole("Junior Faculty");
@@ -56,7 +57,7 @@ function App() {
           }
           setUser(firebaseUser);
         } catch (error) {
-          console.error("Error fetching user role:", error);
+          console.error("Auth routing error:", error);
         }
       } else {
         setUser(null);
@@ -68,7 +69,7 @@ function App() {
   }, []);
 
   if (loading) return (
-    <div className="loading-screen" style={{color: 'white', background: '#000', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+    <div style={{background: '#000', color: '#fff', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
       Authenticating BIUST Reporting Portal...
     </div>
   );
@@ -82,27 +83,22 @@ function App() {
         <Route path="/student-login" element={!user ? <StudentLogin /> : <Navigate to="/dashboard-redirector" />} />
         <Route path="/faculty-login" element={!user ? <FacultyLogin /> : <Navigate to="/dashboard-redirector" />} />
 
-        {/* Redirector:uses mapped roles from rank/isSRC */}
+        {/* Redirector logic using updated URL for Seniors */}
         <Route path="/dashboard-redirector" element={
           !user ? <Navigate to="/" /> :
-          role === "Senior Faculty" ? <Navigate to="/faculty-home" /> : 
+          role === "Senior Faculty" ? <Navigate to="/senior-faculty-home" /> : 
           role === "Junior Faculty" ? <Navigate to="/operator-home" /> : 
           role === "SRC" ? <Navigate to="/scr-home" /> : 
-          role === "Student" ? <Navigate to="/student-home" /> :
-          <div className="text-white p-5 bg-dark vh-100">Account verified, but profile mapping failed. Contact Admin.</div>
+          <Navigate to="/student-home" />
         } />
 
-        {/* Student Flow */}
-        <Route path="/student-home" element={user && role === "Student" ? <StudentHome /> : <Navigate to="/student-login" />} />
-        <Route path="/student-report" element={user ? <StudentReport /> : <Navigate to="/student-login" />} />
-        <Route path="/student-alerts" element={user ? <StudentAlerts /> : <Navigate to="/student-login" />} />
-        <Route path="/student-communities" element={user ? <StudentCommunities /> : <Navigate to="/student-login" />} />
-        <Route path="/student-communities/:id" element={user ? <CommunityChat /> : <Navigate to="/student-login" />} />
-        <Route path="/student-profile" element={user ? <StudentProfile /> : <Navigate to="/student-login" />} />
+        {/* Senior Faculty Flow */}
+        <Route path="/senior-faculty-home" element={user && role === "Senior Faculty" ? <SeniorFacultyHome /> : <Navigate to="/faculty-login" />} />
+        
+        {/* Junior Faculty (Operator) Flow */}
+        <Route path="/operator-home" element={user && role === "Junior Faculty" ? <FacultyHome /> : <Navigate to="/faculty-login" />} />
 
-        {/* Faculty Flow */}
-        <Route path="/operator-home" element={role === "Junior Faculty" ? <FacultyHome /> : <Navigate to="/faculty-login" />} />
-        <Route path="/faculty-home" element={role === "Senior Faculty" ? <SeniorFacultyHome /> : <Navigate to="/faculty-login" />} />
+        {/* Shared Faculty Sub-pages */}
         <Route path="/faculty-scan" element={user ? <FacultyScan /> : <Navigate to="/faculty-login" />} />
         <Route path="/faculty-teams" element={user ? <FacultyTeams /> : <Navigate to="/faculty-login" />} />
         <Route path="/faculty-teams/chat/:memberId" element={user ? <FacultyChat /> : <Navigate to="/faculty-login" />} />
@@ -110,9 +106,15 @@ function App() {
         <Route path="/faculty-alerts" element={user ? <FacultyAlerts /> : <Navigate to="/faculty-login" />} />
         <Route path="/faculty-profile" element={user ? <FacultyProfile /> : <Navigate to="/faculty-login" />} />
 
-        {/* SRC Flow */}
+        {/* Student/SRC Flow */}
+        <Route path="/student-home" element={user && role === "Student" ? <StudentHome /> : <Navigate to="/student-login" />} />
         <Route path="/scr-home" element={role === "SRC" ? <SCRHome /> : <Navigate to="/student-login" />} />
-        
+        <Route path="/student-report" element={user ? <StudentReport /> : <Navigate to="/student-login" />} />
+        <Route path="/student-alerts" element={user ? <StudentAlerts /> : <Navigate to="/student-login" />} />
+        <Route path="/student-communities" element={user ? <StudentCommunities /> : <Navigate to="/student-login" />} />
+        <Route path="/student-communities/:id" element={user ? <CommunityChat /> : <Navigate to="/student-login" />} />
+        <Route path="/student-profile" element={user ? <StudentProfile /> : <Navigate to="/student-login" />} />
+
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
